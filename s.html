@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Learning Hub ✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Lighter grey background */
+            color: #1e293b; /* Darker slate text */
+        }
+        .page { display: none; }
+        .active-page { display: block; }
+        .quiz-option:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            border-color: #3b82f6; /* Blue-500 */
+        }
+        .correct-answer {
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong-answer {
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        /* Details/summary arrow */
+        summary::marker { color: #3b82f6; font-size: 1.2em; }
+        details[open] summary { color: #1d4ed8; }
+        /* Loading Spinner */
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #d1d5db;
+            border-bottom-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container for the entire application -->
+    <div id="app-container" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Login Page -->
+        <div id="login-page" class="page active-page">
+            <div class="text-center bg-white p-8 rounded-2xl shadow-xl">
+                <h1 class="text-4xl font-bold text-slate-900 mb-2">Welcome to the Science Learning Hub! ✨</h1>
+                <p class="text-slate-600 mb-8 text-lg">Please select your name to continue.</p>
+                <div id="student-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Student names will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Page -->
+        <div id="home-page" class="page">
+            <header class="bg-white p-6 rounded-2xl shadow-md mb-8 flex justify-between items-center">
+                <div>
+                    <h1 id="welcome-message" class="text-3xl font-bold text-slate-900"></h1>
+                    <p class="text-slate-500">Choose a chapter to start learning.</p>
+                </div>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Logout</button>
+            </header>
+            <div id="chapter-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Chapters will be dynamically inserted here -->
+            </div>
+        </div>
+        
+        <!-- Chapter Page -->
+        <div id="chapter-page" class="page">
+             <header class="bg-white p-6 rounded-2xl shadow-md mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <button onclick="showPage('home-page')" class="flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            Back to Chapters
+                        </button>
+                        <h1 id="chapter-title" class="text-4xl font-bold text-slate-900 mt-2"></h1>
+                    </div>
+                </div>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center" onclick="showContent('qna')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <h2 class="text-2xl font-bold mb-4">Questions & Answers</h2>
+                    <p class="text-slate-600">Dive deep with 50 questions categorized by Bloom's Taxonomy.</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center" onclick="showContent('quiz')">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                    <h2 class="text-2xl font-bold mb-4">Chapter Quiz</h2>
+                    <p class="text-slate-600">Test your knowledge with 50 multiple-choice questions.</p>
+                </div>
+                <div class="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center md:col-span-2" onclick="showContent('ai_tutor')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 7.343A8 8 0 0117.657 18.657z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1014.12 11.88m-4.242 4.242L6.343 18.657m11.314-2.414a3 3 0 00-4.243-4.243m4.243 4.243l2.414 2.414M12 18.75V21m-2.25-7.5H9m3 7.5H3.375M9 11.25H3.375m3-3.75H3.375M14.25 11.25h2.625m3-3.75h2.625M14.25 3.75h2.625" /></svg>
+                    <h2 class="text-2xl font-bold mb-4">✨ Ask an AI Tutor</h2>
+                    <p>Confused about a topic? Get instant help from your personal AI tutor, Vidya.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Page -->
+        <div id="qna-page" class="page">
+            <header class="bg-white p-6 rounded-2xl shadow-md mb-8 sticky top-4 z-10">
+                <div class="flex items-center justify-between">
+                    <div>
+                         <button onclick="showPage('chapter-page')" class="flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            Back to Chapter
+                        </button>
+                        <h1 id="qna-title" class="text-4xl font-bold text-slate-900 mt-2"></h1>
+                    </div>
+                </div>
+            </header>
+            <div id="qna-content" class="space-y-4">
+                <!-- Q&A content will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Quiz Page -->
+        <div id="quiz-page" class="page">
+             <header class="bg-white p-6 rounded-2xl shadow-md mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <button onclick="showPage('chapter-page');" class="flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            Exit Quiz
+                        </button>
+                        <h1 id="quiz-title" class="text-4xl font-bold text-slate-900 mt-2"></h1>
+                    </div>
+                     <div class="text-right">
+                        <p class="text-slate-600">Question</p>
+                        <p id="quiz-progress" class="text-2xl font-bold"></p>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2.5 mt-4">
+                    <div id="quiz-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </header>
+            
+            <div id="quiz-content" class="bg-white p-8 rounded-2xl shadow-lg"></div>
+
+             <div id="quiz-results" class="hidden text-center bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-3xl font-bold mb-4">Quiz Complete!</h2>
+                <p class="text-xl mb-6">Your Score: <span id="quiz-score" class="font-bold text-blue-600"></span></p>
+                <div id="score-feedback" class="mb-6 text-lg"></div>
+                <div class="flex flex-col items-center gap-4">
+                    <button onclick="showPage('chapter-page')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors w-full sm:w-auto">
+                        Back to Chapter
+                    </button>
+                    <button id="study-plan-btn" onclick="generateStudyPlan()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-lg transition-colors w-full sm:w-auto">
+                       ✨ Generate Personalized Study Plan
+                    </button>
+                </div>
+                 <div id="study-plan-container" class="mt-6 text-left bg-slate-50 p-6 rounded-lg border border-slate-200 hidden"></div>
+            </div>
+        </div>
+        
+        <!-- AI Tutor Page -->
+        <div id="ai-tutor-page" class="page">
+             <header class="bg-white p-6 rounded-2xl shadow-md mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <button onclick="showPage('chapter-page')" class="flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            Back to Chapter
+                        </button>
+                        <h1 id="ai-tutor-title" class="text-4xl font-bold text-slate-900 mt-2">✨ AI Tutor - Vidya</h1>
+                    </div>
+                </div>
+            </header>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div id="tutor-chat-box" class="h-96 overflow-y-auto mb-4 p-4 border rounded-lg bg-slate-50 space-y-4">
+                    <!-- Chat messages will appear here -->
+                </div>
+                <form id="tutor-form" class="flex gap-4">
+                    <input type="text" id="tutor-input" placeholder="Ask a question about this chapter..." class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Send</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA STORE ---
+        // Contains all students, chapters, questions, and quiz data.
+        const students = ["Abhay", "Amruta", "Advaith", "Harika", "Harshitha", "Deepthi", "Nischith", "Tanvi", "Saanvi", "Thanushree KG", "Charvi"];
+        
+        const data = {
+            chapters: [
+                { id: 'ch1', title: "Is Matter Around Us Pure?", description: "Explore the nature of matter, from pure substances and mixtures to solutions and colloids." },
+                { id: 'ch2', title: "Force and Laws of Motion", description: "Understand the fundamental principles governing motion, inertia, momentum, and forces." },
+                { id: 'ch3', title: "Improvement in Food Resources", description: "Learn about agricultural practices, crop improvement, and animal husbandry for sustainable food production." }
+            ],
+            chapterSummaries: {
+                ch1: "This chapter covers the scientific classification of matter. It differentiates between pure substances (elements and compounds) and mixtures (homogeneous and heterogeneous). It details three types of mixtures: solutions (solute/solvent, concentration), suspensions, and colloids (dispersed phase/dispersing medium, Tyndall effect). It also covers separation techniques like evaporation, centrifugation, sublimation, and chromatography, and distinguishes between physical and chemical changes.",
+                ch2: "This chapter introduces Newton's three laws of motion. The First Law defines inertia and its relation to mass. The Second Law relates force, mass, and acceleration (F=ma) and defines momentum (p=mv). The Third Law states that for every action, there is an equal and opposite reaction. Concepts of balanced/unbalanced forces and the law of conservation of momentum are also explained.",
+                ch3: "This chapter discusses methods to improve food production from agriculture and animal husbandry. It covers crop variety improvement (hybridisation), crop production management (nutrients, manure vs. fertilizers, irrigation), and cropping patterns (mixed cropping, intercropping, crop rotation). It also details animal husbandry, including cattle farming (milch/draught animals), poultry farming (broilers/layers), fish production (capture/culture fisheries), and bee-keeping (apiculture)."
+            },
+            qna: {
+                ch1: [
+                    { level: "Remembering", q: "Define a pure substance.", a: "A pure substance consists of a single type of particle, meaning all constituent particles are the same in their chemical nature. Examples include elements like iron and compounds like water." },
+                    { level: "Remembering", q: "What is a mixture?", a: "A mixture is constituted by more than one kind of pure form of matter (substance). They can be separated into their components by physical methods. Examples include saltwater and air." },
+                    { level: "Remembering", q: "List the three main types of mixtures discussed in the chapter.", a: "The three main types of mixtures are Solutions, Suspensions, and Colloids." },
+                    { level: "Remembering", q: "What is the Tyndall effect?", a: "The Tyndall effect is the scattering of a beam of light by the particles of a colloid or a fine suspension, making the path of light visible." },
+                    { level: "Remembering", q: "Define solubility.", a: "Solubility is the maximum amount of a solute that can be dissolved in a given amount of solvent at a specific temperature to form a saturated solution." },
+                    { level: "Remembering", q: "What are the two components of a solution called?", a: "The two components of a solution are the solute (the substance that is dissolved) and the solvent (the substance in which the solute dissolves)." },
+                    { level: "Remembering", q: "Name the process used to separate components of a mixture with different boiling points.", a: "Distillation (or fractional distillation for liquids with close boiling points)." },
+                    { level: "Remembering", q: "What is an alloy?", a: "An alloy is a homogeneous mixture of two or more metals, or a metal and a non-metal, that cannot be separated into their components by physical methods. Example: Brass." },
+                    { level: "Understanding", q: "Explain the difference between a homogeneous and a heterogeneous mixture with examples.", a: "A homogeneous mixture has a uniform composition and its components are not visibly distinct (e.g., saltwater, air). A heterogeneous mixture has a non-uniform composition and its components are often visibly distinct (e.g., sand in water, oil and water)." },
+                    { level: "Understanding", q: "Why is a solution considered a homogeneous mixture?", a: "A solution is considered homogeneous because its solute particles are so small (less than 1 nm) that they are evenly distributed at the particle level, and they do not scatter light or settle down. The composition is uniform throughout." },
+                    { level: "Understanding", q: "How can you differentiate between a true solution and a colloidal solution?", a: "Although both may appear homogeneous, you can differentiate them using the Tyndall effect. A beam of light will be visible through a colloidal solution but not through a true solution. Also, particles in a colloid are larger than in a solution." },
+                    { level: "Understanding", q: "Explain why milk is considered a colloid.", a: "Milk is a colloid because it's a heterogeneous mixture where tiny globules of fat and protein (dispersed phase) are uniformly spread throughout water (dispersing medium). The particles are large enough to scatter light but small enough not to settle down." },
+                    { level: "Understanding", q: "Describe the difference between a physical change and a chemical change.", a: "A physical change alters the form or appearance of a substance but not its chemical composition (e.g., melting ice). A chemical change results in the formation of a new substance with different properties (e.g., rusting of iron)." },
+                    { level: "Understanding", q: "Why do particles in a suspension settle down when left undisturbed, while particles in a colloid do not?", a: "Suspension particles are large and heavy enough for gravity to overcome the random motion of the solvent particles, causing them to settle. Colloidal particles are smaller and lighter, and their constant random (Brownian) motion is sufficient to counteract gravity, keeping them suspended indefinitely." },
+                    { level: "Understanding", q: "What is meant by the 'concentration' of a solution?", a: "The concentration of a solution is a measure of the amount of solute that is dissolved in a given quantity of solvent or solution. It can be expressed in various ways, such as mass percentage, volume percentage, or molarity." },
+                    { level: "Understanding", q: "Differentiate between an element and a compound.", a: "An element is a basic form of matter that cannot be broken down into simpler substances by chemical reactions (e.g., Oxygen, Iron). A compound is a substance formed when two or more elements are chemically bonded together in a fixed ratio (e.g., Water H₂O, Carbon Dioxide CO₂)." },
+                    { level: "Applying", q: "A solution contains 50 g of common salt in 450 g of water. Calculate the concentration in terms of mass by mass percentage.", a: "Mass of solute (salt) = 50 g. Mass of solvent (water) = 450 g. Mass of solution = Mass of solute + Mass of solvent = 50 g + 450 g = 500 g. Concentration = (Mass of solute / Mass of solution) × 100 = (50 / 500) × 100 = 10%." },
+                    { level: "Applying", q: "How would you separate a mixture of sand, common salt, and ammonium chloride? Describe the steps.", a: "1. **Sublimation:** Heat the mixture gently. Ammonium chloride will sublimate (turn directly into gas) and can be collected by cooling the vapor on a cold surface. 2. **Filtration:** Add water to the remaining mixture of sand and salt. Salt dissolves. Filter the solution to separate the insoluble sand. 3. **Evaporation:** Gently heat the salt solution (filtrate) to evaporate the water, leaving behind the pure salt." },
+                    { level: "Applying", q: "To make a saturated solution, 36 g of sodium chloride is dissolved in 100 g of water at 293 K. Find its concentration at this temperature.", a: "Mass of solute = 36 g. Mass of solvent = 100 g. Mass of solution = 36 g + 100 g = 136 g. Concentration = (Mass of solute / Mass of solution) × 100 = (36 / 136) × 100 ≈ 26.47%." },
+                    { level: "Applying", q: "Identify the solute and solvent in the following: (a) Tincture of iodine, (b) Aerated drinks, (c) Brass.", a: "(a) Solute: Iodine, Solvent: Alcohol. (b) Solute: Carbon dioxide gas, Solvent: Water. (c) Brass is an alloy (solid solution). Solute: Zinc, Solvent: Copper." },
+                    { level: "Applying", q: "You are given a colourless liquid. How would you determine if it is pure water?", a: "Determine its boiling point. Pure water boils at exactly 100°C (373 K) at standard atmospheric pressure (1 atm). If it boils at this temperature without any variation, it is pure. The presence of impurities will either elevate or depress the boiling point." },
+                    { level: "Applying", q: "What separation technique would you use to separate iron pins from sand?", a: "Magnetic separation. A magnet can be used to attract and remove the iron pins, leaving the non-magnetic sand behind." },
+                    { level: "Applying", q: "A solution is prepared by dissolving 10 mL of alcohol in 90 mL of water. Calculate the volume by volume percentage.", a: "Volume of solute (alcohol) = 10 mL. Volume of solvent (water) = 90 mL. Volume of solution = 10 mL + 90 mL = 100 mL. Concentration = (Volume of solute / Volume of solution) × 100 = (10 / 100) × 100 = 10%." },
+                    { level: "Applying", q: "Classify the following as physical or chemical changes: cutting of trees, melting of butter, rusting of almirah, boiling of water.", a: "<b>Physical changes:</b> cutting of trees, melting of butter, boiling of water. <br><b>Chemical change:</b> rusting of almirah." },
+                    { level: "Analyzing", q: "Compare the properties of solutions, suspensions, and colloids based on particle size, stability, and filtration.", a: "<b>Solution:</b> Particle size < 1 nm; Stable (particles don't settle); Cannot be separated by filtration. <br><b>Suspension:</b> Particle size > 1000 nm; Unstable (particles settle); Can be separated by filtration. <br><b>Colloid:</b> Particle size 1-1000 nm; Stable; Cannot be separated by filtration but can by centrifugation." },
+                    { level: "Analyzing", q: "A student argues that since alloys are mixtures, their properties should be an average of their constituents. Is this always true? Justify your answer with an example.", a: "This is not always true. The properties of an alloy can be significantly different and often superior to its constituents. For example, steel (an alloy of iron and carbon) is much harder and stronger than pure iron. Brass (copper and zinc) is more malleable and has better acoustic properties than either metal alone." },
+                    { level: "Analyzing", q: "When a candle burns, both physical and chemical changes occur. Analyze the process and identify each type of change.", a: "<b>Physical Change:</b> The melting of the wax near the flame is a physical change, as it's a change of state from solid to liquid without changing the chemical nature of the wax. <br><b>Chemical Change:</b> The burning of the wax vapor in the presence of oxygen is a chemical change. It produces new substances: carbon dioxide, water vapor, heat, and light." },
+                    { level: "Analyzing", q: "Categorize the following into elements, compounds, and mixtures: Iron, Steel, Water, Air, Salt, Carbon Dioxide, Milk.", a: "<b>Elements:</b> Iron. <br><b>Compounds:</b> Water, Salt (Sodium Chloride), Carbon Dioxide. <br><b>Mixtures:</b> Steel, Air, Milk." },
+                    { level: "Analyzing", q: "Why can't the components of a compound be separated by physical methods, whereas the components of a mixture can?", a: "In a compound, elements are chemically bonded together in a fixed ratio, forming new molecules. Breaking these chemical bonds requires a chemical reaction (energy input). In a mixture, substances are just physically combined without chemical bonds, so they retain their individual properties and can be separated based on differences in these physical properties (like boiling point, solubility, etc.)." },
+                    { level: "Analyzing", q: "Is air a homogeneous or heterogeneous mixture? Explain your reasoning.", a: "Air is considered a homogeneous mixture. Although it contains different gases (Nitrogen, Oxygen, Argon, CO₂, etc.), these gases are mixed so uniformly at the molecular level that any sample of air has the same composition and properties." },
+                    { level: "Analyzing", q: "If you leave a saturated salt solution to evaporate slowly, what will you observe? What is this process called?", a: "You will observe the formation of solid salt crystals. As the water (solvent) evaporates, the solution becomes supersaturated, and the excess solute comes out of the solution in an orderly, solid structure. This process is called crystallization." },
+                    { level: "Analyzing", q: "Why is water called a 'universal solvent'?", a: "Water is called the universal solvent because it can dissolve more substances than any other liquid. This is due to the polarity of its molecules, which allows it to attract and pull apart many different types of molecules." },
+                    { level: "Analyzing", q: "Compare the properties of a mixture of iron filings and sulphur powder with the compound iron sulphide (FeS) formed by heating them.", a: "<b>Mixture:</b> Components can be separated by a magnet (physical means). Has variable composition. Shows properties of both iron and sulphur. <br><b>Compound (FeS):</b> Components can only be separated by chemical means. Has a fixed composition. Is not magnetic and has properties entirely different from iron or sulphur." },
+                    { level: "Evaluating", q: "Which separation technique is most suitable for separating cream from milk? Justify your choice.", a: "Centrifugation. Milk is a colloid where fat particles are dispersed in a liquid. Due to the density difference between the fat (cream) and the liquid, spinning the milk at high speed forces the lighter cream to the top, where it can be skimmed off. Simple filtration would not work because the particles are too small." },
+                    { level: "Evaluating", q: "A commercial brand of orange juice is labeled 'pure'. From a scientific standpoint, is this claim accurate? Evaluate.", a: "From a scientific standpoint, the claim is inaccurate. Orange juice is a complex mixture. It contains water, sugar (fructose), citric acid, vitamins, minerals, and pulp (cellulose fibers). A scientist would classify it as a heterogeneous mixture (specifically, a suspension of pulp in a solution). The term 'pure' in this context is a marketing term meaning no added sugars or artificial ingredients." },
+                    { level: "Evaluating", q: "Judge the effectiveness of using evaporation to separate a mixture of salt and sand.", a: "Using evaporation alone would be completely ineffective. Evaporation is used to separate a soluble solid from a liquid. Since both salt and sand are solids, heating them would not cause separation. The correct process requires first dissolving the salt in water, then using filtration to separate the sand, and finally using evaporation to recover the salt from the water." },
+                    { level: "Evaluating", q: "Assess the statement: 'All homogeneous mixtures are solutions.'", a: "This statement is largely correct. By definition, a solution is a homogeneous mixture. The term 'homogeneous' implies a uniform composition down to the molecular level, which is the key characteristic of a solution. However, some might consider alloys (solid solutions) a distinct category, but they still fit the fundamental definition." },
+                    { level: "Evaluating", q: "Critique the use of the term 'impure' in daily life versus its scientific meaning.", a: "In daily life, 'impure' often implies contamination, adulteration, or something being dirty or harmful. For example, 'impure water' might mean it contains bacteria. Scientifically, 'impure' simply means it is a mixture, i.e., it contains more than one type of substance. So, scientifically, even clean, drinkable mineral water is 'impure' because it contains dissolved salts and minerals in addition to H₂O." },
+                    { level: "Evaluating", q: "Is dissolving salt in water a physical or chemical change? Justify your answer.", a: "It is a physical change. Although the salt breaks down into ions, no new substance is formed. The salt can be recovered in its original form by simply evaporating the water. The chemical nature of both the salt (NaCl) and water (H₂O) remains unchanged." },
+                    { level: "Evaluating", q: "A student suggests separating a mixture of sugar and sand by adding alcohol, as sugar is soluble in alcohol. Evaluate this method.", a: "This method is viable in principle but may be less practical than using water. Sugar is much less soluble in alcohol than in water, so it would require a large amount of alcohol and might not be efficient. Using water is generally the better solvent for separating sugar from sand due to sugar's high solubility in it." },
+                    { level: "Evaluating", q: "Which is a better method to obtain pure sugar from a sugar solution: evaporation or crystallization? Defend your choice.", a: "Crystallization is the better method. Evaporation to dryness can char or decompose the sugar at high temperatures and may yield an amorphous powder. Slow crystallization allows the sugar to form well-defined, pure crystals, leaving soluble impurities behind in the remaining solution (mother liquor)." },
+                    { level: "Creating", q: "Design an experiment to determine the solubility of sugar in water at room temperature.", a: "1. **Materials:** Beaker, stirring rod, balance, 100 mL graduated cylinder, sugar, water. 2. **Procedure:** Measure exactly 100 mL of water and pour it into the beaker. Weigh the beaker with water. 3. Start adding small, pre-weighed amounts of sugar (e.g., 5 g at a time), stirring continuously until it dissolves completely. 4. Continue adding sugar until a point is reached where no more sugar dissolves, and some solid sugar remains at the bottom even after prolonged stirring. This is the saturation point. 5. Weigh the beaker again. The total mass of sugar dissolved is the final mass minus the initial mass of the beaker and water. 6. **Result:** The solubility is expressed as grams of sugar per 100 mL (or 100 g) of water at that temperature." },
+                    { level: "Creating", q: "Propose a method to create a stable colloidal solution of starch in water (a 'sol').", a: "1. Take about 1 gram of starch powder in a beaker. 2. Add a few mL of cold water and stir to make a thin, uniform paste. This prevents lump formation. 3. In another beaker, take about 100 mL of water and bring it to a boil. 4. Slowly pour the starch paste into the boiling water while stirring continuously. 5. Continue boiling for a few minutes until the solution becomes translucent. 6. Allow it to cool. The resulting translucent mixture is a stable colloidal solution of starch." },
+                    { level: "Creating", q: "Formulate a plan to separate the components of ink using chromatography. What principle is this based on?", a: "1. **Plan:** Draw a line with a pencil about 2 cm from the bottom edge of a filter paper strip. Put a small dot of ink in the center of this line. Suspend the paper vertically in a jar containing a small amount of a solvent (like water or alcohol), ensuring the ink spot is above the solvent level. Cover the jar. 2. **Observation:** The solvent will rise up the paper via capillary action. As it passes the ink spot, it will dissolve the ink and carry it up the paper. 3. **Principle:** This is based on the principle that different components (pigments) of the ink have different solubilities in the solvent and different adhesions to the filter paper. The most soluble and least adhesive component will travel the farthest, separating the colors." },
+                    { level: "Creating", q: "Invent a new type of beverage that is a multi-layered colloid. Describe its components and why it would be stable.", a: "Let's create 'Galaxy Dew'. It would have three layers. **Bottom Layer:** A mango-flavored gel (liquid dispersed in solid). **Middle Layer:** A milk-based emulsion with tiny, suspended strawberry pearls (liquid in liquid). **Top Layer:** A passionfruit-flavored foam (gas in liquid). **Stability:** The gel is stable due to its semi-solid structure. The emulsion can be stabilized using a natural emulsifier like lecithin. The foam can be stabilized with a protein like egg white. The density of each layer would be carefully controlled (gel heaviest, foam lightest) to prevent mixing." },
+                    { level: "Creating", q: "Develop a flowchart to guide someone in classifying any given material as an element, compound, or mixture.", a: "Start -> Can it be separated by physical means? --(Yes)--> Mixture -> Does it have uniform composition? --(Yes)--> Homogeneous Mixture. --(No)--> Heterogeneous Mixture. || Start -> Can it be separated by physical means? --(No)--> Pure Substance -> Can it be broken down into simpler substances by chemical reactions? --(Yes)--> Compound. --(No)--> Element." },
+                    { level: "Creating", q: "Design a simple water filter using common household materials to purify muddy water.", a: "1. **Materials:** A large plastic bottle, cotton, sand, fine gravel, coarse gravel. 2. **Construction:** Cut the bottom off the plastic bottle and turn it upside down. 3. **Layering (from bottom to top):** Place a thick layer of cotton at the neck. Then add a layer of fine sand, followed by a layer of coarse sand, and finally a layer of fine gravel. 4. **Operation:** Slowly pour muddy water into the top. The layers will trap progressively smaller particles, and clearer water will drip out from the bottom. This demonstrates the principle of filtration." },
+                    { level: "Creating", q: "Propose a real-world application of the Tyndall effect.", a: "The Tyndall effect is used in smoke detectors. An optical smoke detector has a light source (like an LED) and a light sensor placed at an angle. In clean air, the light beam does not hit the sensor. When smoke (a colloid of solid particles in air) enters the chamber, the particles scatter the light, causing some of it to hit the sensor. This triggers the alarm." },
+                    { level: "Creating", q: "Devise a method to show that air is a mixture and not a compound.", a: "1. **Liquefaction & Fractional Distillation:** Cool air to a very low temperature (-200°C) under high pressure to liquefy it. 2. Slowly warm the liquid air. Since the components of the mixture have different boiling points (Nitrogen: -196°C, Oxygen: -183°C), they will boil off at different temperatures. Nitrogen will boil off first, followed by oxygen. 3. Since the components can be separated by a physical process (fractional distillation) and are not in a fixed ratio, air is a mixture." }
+                ],
+                ch2: [
+                    { level: "Remembering", q: "State Newton's First Law of Motion.", a: "Newton's First Law of Motion, also known as the Law of Inertia, states that an object at rest stays at rest and an object in motion stays in motion with the same speed and in the same direction unless acted upon by an unbalanced force." },
+                    { level: "Remembering", q: "Define inertia. What quantity is a measure of inertia?", a: "Inertia is the natural tendency of an object to resist a change in its state of motion or of rest. The mass of an object is a quantitative measure of its inertia." },
+                    { level: "Remembering", q: "State Newton's Second Law of Motion in terms of momentum.", a: "Newton's Second Law of Motion states that the rate of change of momentum of an object is proportional to the applied unbalanced force in the direction of the force." },
+                    { level: "Remembering", q: "What is the mathematical formula for Newton's Second Law?", a: "F = ma, where F is the net force acting on an object, m is the mass of the object, and a is the acceleration produced." },
+                    { level: "Remembering", q: "State Newton's Third Law of Motion.", a: "Newton's Third Law of Motion states that for every action, there is an equal and opposite reaction. These two forces act on two different bodies." },
+                    { level: "Remembering", q: "What is the SI unit of momentum?", a: "The SI unit of momentum is kilogram-meter per second (kg m/s)." },
+                    { level: "Remembering", q: "Define one newton.", a: "One newton (1 N) is the amount of force required to give a 1-kilogram mass an acceleration of 1 meter per second squared (1 m/s²)." },
+                    { level: "Remembering", q: "What is friction?", a: "Friction is a force that opposes the relative motion or tendency of such motion between two surfaces in contact." },
+                    { level: "Understanding", q: "Explain why a person tends to fall backward when a bus suddenly starts moving forward.", a: "When the bus starts, the lower part of the person's body (their feet) is in contact with the bus and moves forward. However, due to inertia, the upper part of their body tends to remain at rest. This relative motion makes the person feel as if they are falling backward." },
+                    { level: "Understanding", q: "Why does a fielder pull their hands back while catching a fast-moving cricket ball?", a: "By pulling their hands back, the fielder increases the time interval over which the ball's momentum is reduced to zero. According to the second law (F = Δp / t), increasing the time (t) decreases the rate of change of momentum, which reduces the force (F) exerted by the ball on the fielder's hands, preventing injury." },
+                    { level: "Understanding", q: "Explain the concept of balanced and unbalanced forces.", a: "Balanced forces are two or more forces of equal magnitude acting on an object in opposite directions. They do not cause a change in the object's state of motion (net force is zero). Unbalanced forces are forces that are not equal and opposite, resulting in a net force that causes a change in the object's motion (acceleration)." },
+                    { level: "Understanding", q: "A gun recoils when a bullet is fired. Explain this phenomenon using one of Newton's laws.", a: "This is explained by Newton's Third Law. The gun exerts a forward force (action) on the bullet. In response, the bullet exerts an equal and opposite force (reaction) on the gun. This reaction force causes the gun to move backward, which is known as recoil." },
+                    { level: "Understanding", q: "If action and reaction are equal and opposite, why don't they cancel each other out?", a: "They don't cancel each other out because they act on two different objects. For forces to cancel, they must act on the same object. For example, the gun pushes the bullet, and the bullet pushes the gun. Since the forces are on different bodies, they both produce an effect (acceleration)." },
+                    { level: "Understanding", q: "Explain the law of conservation of momentum.", a: "The law of conservation of momentum states that for two or more bodies in an isolated system acting upon each other, their total momentum remains constant unless an external force is applied. In other words, the total momentum before a collision is equal to the total momentum after the collision." },
+                    { level: "Understanding", q: "Why is it dangerous to jump out of a moving boat onto the shore?", a: "When you jump forward (action), you push the boat backward (reaction) according to Newton's Third Law. This backward movement of the boat can increase the distance to the shore, potentially causing you to fall into the water." },
+                    { level: "Understanding", q: "Why do some leaves get detached from a tree if we vigorously shake its branch?", a: "When the branch is shaken, it is set into motion. However, the leaves, due to their inertia of rest, tend to remain in their position. This resistance to motion causes the leaves to get detached from the moving branch." },
+                    { level: "Understanding", q: "How does a rocket propel itself in space where there is no air to push against?", a: "A rocket works on Newton's Third Law and the conservation of momentum. It expels hot gases at high velocity out of its nozzle (action). These gases, in turn, exert an equal and opposite force on the rocket (reaction), pushing it forward. It doesn't need air to push against." },
+                    { level: "Applying", q: "A constant force of 20 N acts on an object of mass 5 kg for 4 seconds. Calculate the acceleration and the change in velocity.", a: "Using F = ma, a = F / m = 20 N / 5 kg = 4 m/s². Acceleration is the rate of change of velocity (a = Δv / t). So, change in velocity Δv = a × t = 4 m/s² × 4 s = 16 m/s." },
+                    { level: "Applying", q: "An object of mass 100 kg is accelerated uniformly from a velocity of 5 m/s to 8 m/s in 6 s. Calculate the initial and final momentum and the magnitude of the force exerted.", a: "Initial momentum (p₁) = mu = 100 kg × 5 m/s = 500 kg m/s. Final momentum (p₂) = mv = 100 kg × 8 m/s = 800 kg m/s. Force (F) = Change in momentum / time = (p₂ - p₁) / t = (800 - 500) / 6 s = 300 / 6 N = 50 N." },
+                    { level: "Applying", q: "A truck starts from rest and rolls down a hill with constant acceleration. It travels 400 m in 20 s. Find its acceleration. If its mass is 7 tonnes, find the force acting on it.", a: "Using s = ut + ½at². Since u=0, 400 = 0 + ½ * a * (20)². 400 = ½ * a * 400. So, a = 2 m/s². Mass = 7 tonnes = 7000 kg. Force F = ma = 7000 kg × 2 m/s² = 14000 N." },
+                    { level: "Applying", q: "Which would require a greater force: accelerating a 2 kg mass at 5 m/s² or a 4 kg mass at 2 m/s²?", a: "Case 1: F₁ = m₁a₁ = 2 kg × 5 m/s² = 10 N. Case 2: F₂ = m₂a₂ = 4 kg × 2 m/s² = 8 N. Therefore, accelerating the 2 kg mass at 5 m/s² requires a greater force (10 N > 8 N)." },
+                    { level: "Applying", q: "A bullet of mass 20 g is horizontally fired with a velocity of 150 m/s from a pistol of mass 2 kg. What is the recoil velocity of the pistol?", a: "By conservation of momentum, m₁u₁ + m₂u₂ = m₁v₁ + m₂v₂. Initially, both are at rest, so initial momentum = 0. Mass of bullet (m₁) = 20 g = 0.02 kg. Mass of pistol (m₂) = 2 kg. Final velocity of bullet (v₁) = 150 m/s. 0 = (0.02 kg * 150 m/s) + (2 kg * v₂). 0 = 3 + 2v₂. 2v₂ = -3. v₂ = -1.5 m/s. The recoil velocity of the pistol is 1.5 m/s in the opposite direction." },
+                    { level: "Applying", q: "A stone of 1 kg is thrown with a velocity of 20 m/s across the frozen surface of a lake and comes to rest after travelling 50 m. What is the force of friction?", a: "First find acceleration. Using v² = u² + 2as. 0² = 20² + 2 * a * 50. 0 = 400 + 100a. a = -4 m/s². Now, F = ma = 1 kg * (-4 m/s²) = -4 N. The force of friction is 4 N." },
+                    { level: "Applying", q: "An automobile vehicle has a mass of 1500 kg. What must be the force between the vehicle and road if the vehicle is to be stopped with a negative acceleration of 1.7 m/s²?", a: "F = ma = 1500 kg * (-1.7 m/s²) = -2550 N. The magnitude of the stopping force is 2550 N." },
+                    { level: "Applying", q: "Calculate the momentum of a man of mass 75 kg when he walks with a uniform velocity of 2 m/s.", a: "Momentum p = mv = 75 kg * 2 m/s = 150 kg m/s." },
+                    { level: "Applying", q: "A hammer of mass 500 g, moving at 50 m/s, strikes a nail. The nail stops the hammer in 0.01 s. What is the force of the nail on the hammer?", a: "Mass m = 500 g = 0.5 kg. Initial velocity u = 50 m/s. Final velocity v = 0 m/s. Time t = 0.01 s. Force F = m(v-u)/t = 0.5 * (0 - 50) / 0.01 = -25 / 0.01 = -2500 N. The force is 2500 N in the opposite direction of the hammer's motion." },
+                    { level: "Applying", q: "An object of mass 1 kg travelling in a straight line with a velocity of 10 m/s collides with a stationary wooden block of mass 5 kg. They stick together. Calculate their combined velocity.", a: "By conservation of momentum: m₁u₁ + m₂u₂ = (m₁ + m₂)v. (1 kg * 10 m/s) + (5 kg * 0 m/s) = (1 kg + 5 kg) * v. 10 = 6v. v = 10/6 ≈ 1.67 m/s." },
+                    { level: "Analyzing", q: "A car and a large truck are moving at the same velocity. Which has more inertia? Which has more momentum? Explain.", a: "The truck has more inertia because it has a greater mass. Inertia is a measure of mass. The truck also has more momentum. Momentum (p) is the product of mass and velocity (p = mv). Since both have the same velocity (v), the one with the greater mass (m) will have greater momentum." },
+                    { level: "Analyzing", q: "An insect hits the windshield of a fast-moving car. Compare the force experienced by the insect and the car. Compare their accelerations.", a: "According to Newton's Third Law, the force exerted by the car on the insect is equal in magnitude and opposite in direction to the force exerted by the insect on the car. However, their accelerations are vastly different. According to Newton's Second Law (a = F/m), the insect, with its very small mass, experiences a huge acceleration. The car, with its very large mass, experiences a negligible acceleration." },
+                    { level: "Analyzing", q: "If an object is moving with constant velocity, what can you conclude about the net force acting on it? Relate this to two of Newton's Laws.", a: "If an object moves with constant velocity, its acceleration is zero. According to Newton's Second Law (F = ma), if 'a' is zero, the net force 'F' must also be zero. This is consistent with Newton's First Law, which states that an object in motion will stay in motion with constant velocity if no unbalanced force acts on it. This means all forces acting on it are balanced." },
+                    { level: "Analyzing", q: "Why is it advised to tie luggage kept on the roof of a bus with a rope?", a: "This is due to inertia. When the bus is moving, the luggage is also in motion. If the bus suddenly stops, the luggage, due to its inertia of motion, will tend to continue moving forward and may fall off. If the bus starts suddenly from rest, the luggage, due to its inertia of rest, will tend to stay at rest and may fall off the back. The rope provides an external force to change the state of motion of the luggage along with the bus." },
+                    { level: "Analyzing", q: "Break down the forces involved when you walk. How does Newton's Third Law apply?", a: "When you walk, you push backward on the ground with your foot (action). According to Newton's Third Law, the ground pushes forward on your foot with an equal and opposite force (reaction). It is this forward reaction force from the ground that propels you forward. There is also the downward force of gravity on you and the upward normal force from the ground, which are another action-reaction pair." },
+                    { level: "Analyzing", q: "A student says the two opposite and equal forces in Newton's third law cancel each other. Analyze this logic.", a: "This logic is flawed. The forces of an action-reaction pair act on two *different* objects, so they cannot cancel each other out. For forces to cancel, they must be acting on the *same* object. The action-reaction pair results in accelerations on both objects (inversely proportional to their masses)." },
+                    { level: "Analyzing", q: "How is the First Law of Motion actually a special case of the Second Law of Motion?", a: "The Second Law is F = ma. If the net force (F) on an object is zero, then F = 0, which means ma = 0. Since mass (m) is not zero, the acceleration (a) must be zero. Zero acceleration means the velocity is constant (which could be zero or non-zero). This is exactly what the First Law states: an object's velocity remains constant unless an unbalanced force acts on it." },
+                    { level: "Analyzing", q: "When a carpet is beaten with a stick, dust comes out of it. Explain.", a: "When the stick hits the carpet, it sets the carpet into motion. The dust particles, due to their inertia of rest, tend to remain in their original position. As the carpet moves away, the dust particles are left behind and fall out due to gravity." },
+                    { level: "Analyzing", q: "Is it possible for a small object to have more momentum than a large object? Explain with an example.", a: "Yes. Momentum depends on both mass and velocity (p = mv). A small object can have more momentum if its velocity is sufficiently high. For example, a 10 g (0.01 kg) bullet traveling at 500 m/s has a momentum of 5 kg m/s. A 2 kg stone traveling at 2 m/s has a momentum of only 4 kg m/s. The bullet has more momentum despite having less mass." },
+                    { level: "Evaluating", q: "A student states, 'Since F=ma, an object with no force on it cannot be moving.' Evaluate this statement.", a: "The statement is incorrect. F=ma relates net force to *acceleration*, not velocity. If the net force is zero, the acceleration is zero. Zero acceleration means the velocity is constant. This constant velocity could be zero (at rest) or it could be non-zero. So, an object can be moving with a constant velocity even if the net force on it is zero, as stated by Newton's First Law." },
+                    { level: "Evaluating", q: "Two objects of different masses are dropped from the same height in a vacuum. Which will hit the ground first? Justify your answer.", a: "They will hit the ground at the same time. In a vacuum, there is no air resistance. The only force acting on both objects is gravity. The acceleration due to gravity (g) is constant for all objects near the Earth's surface, regardless of their mass. Since they start from the same height with the same initial velocity (zero) and have the same acceleration, they will take the same amount of time to fall." },
+                    { level: "Evaluating", q: "Which is a better measure of an object's 'quantity of motion': velocity or momentum? Justify your choice.", a: "Momentum is a better measure. Velocity only describes how fast an object is moving. Momentum (mass × velocity) takes into account both the object's speed and its mass. For example, a slow-moving truck and a fast-moving tennis ball can have the same velocity, but the truck has a far greater 'quantity of motion' and would be much harder to stop, which is reflected in its much larger momentum." },
+                    { level: "Evaluating", q: "Is it possible for an object to be traveling with a non-zero velocity if the net external force on it is zero? Explain.", a: "Yes, it is possible. According to Newton's First Law, an object in motion stays in motion with a constant velocity unless an unbalanced force acts on it. If the net external force is zero, the object's acceleration is zero, which means its velocity is constant. This constant velocity can be any value, including a non-zero value." },
+                    { level: "Evaluating", q: "Assess the importance of friction in our daily lives. Is it always a disadvantage?", a: "Friction is not always a disadvantage; it is essential. Without friction, we couldn't walk, cars couldn't move or stop, and we couldn't hold anything. It is the force that allows for grip and traction. While it is a disadvantage in some cases (e.g., causing wear and tear in machinery, reducing efficiency), its advantages in most everyday situations are far more critical." },
+                    { level: "Evaluating", q: "Judge whether a passenger on a merry-go-round moving at a constant speed is accelerating. Explain your reasoning.", a: "Yes, the passenger is accelerating. Although their speed is constant, their direction is continuously changing. Velocity is a vector (speed and direction), so a change in direction means a change in velocity. A change in velocity is, by definition, acceleration. This is called centripetal acceleration, and it requires a net force towards the center of the circle." },
+                    { level: "Evaluating", q: "A massive truck parked along the roadside will not move when you push it. A student justifies this by saying the two opposite and equal forces cancel each other. Critique this justification.", a: "The student is confusing two different pairs of forces. The action (you pushing the truck) and reaction (truck pushing you) act on different bodies and don't cancel. The reason the truck doesn't move is that the static friction force between the truck's tires and the road is equal and opposite to your push, resulting in a zero *net force on the truck*. Your push is not strong enough to overcome the maximum static friction." },
+                    { level: "Creating", q: "Design an experiment to demonstrate Newton's Third Law of Motion using a balloon.", a: "1. Inflate a balloon and pinch its end closed. 2. Tape a straw horizontally along the length of the balloon. 3. Thread a long string through the straw and tie the ends of the string to two fixed points across a room, creating a taut guideline. 4. Pull the balloon to one end of the string. 5. Release the balloon. 6. **Observation:** The balloon will shoot forward along the string. 7. **Explanation:** The balloon pushes the air out backward (action). The escaping air pushes the balloon forward with an equal and opposite force (reaction), demonstrating the law." },
+                    { level: "Creating", q: "Devise a simple method to qualitatively compare the inertia of two objects of similar size but different mass (e.g., a solid steel ball and a hollow plastic ball).", a: "1. Place both balls on a smooth, flat surface. 2. Apply a quick, identical push (a 'flick' of the finger) to each ball. 3. Observe their motion. The plastic ball (less mass, less inertia) will accelerate much more and move faster. The steel ball (more mass, more inertia) will resist the change in motion more and accelerate less. This demonstrates that the object with more mass has more inertia." },
+                    { level: "Creating", q: "Propose a safety feature for a car based on the concept of increasing the time of impact to reduce force.", a: "Crumple zones. The front and rear sections of a car are designed to collapse or 'crumple' in a controlled way during a collision. This crumpling increases the time it takes for the car (and the occupants) to come to a stop. Based on the impulse-momentum theorem (FΔt = Δp), by increasing the impact time (Δt), the average impact force (F) on the occupants is significantly reduced, decreasing the severity of injuries." },
+                    { level: "Creating", q: "Create a hypothetical scenario involving a collision and use the principle of conservation of momentum to predict the outcome.", a: "Scenario: A 1000 kg car traveling east at 10 m/s collides head-on with a 2000 kg truck traveling west at 5 m/s. They stick together after the collision. **Prediction:** Let east be positive. Initial momentum = p_car + p_truck = (1000 kg * 10 m/s) + (2000 kg * -5 m/s) = 10000 - 10000 = 0 kg m/s. Since initial momentum is zero, the final momentum must also be zero. As they stick together, their combined mass is 3000 kg. Final momentum = (3000 kg) * v_final. So, 0 = 3000 * v_final, which means v_final = 0 m/s. They will come to a complete stop at the point of collision." },
+                    { level: "Creating", q: "Develop a short story or comic strip that explains the three laws of motion through the adventures of a character.", a: "Character: 'Inertia Man'. **Panel 1 (1st Law):** Inertia Man is sleeping soundly. A villain tries to push him, but he doesn't budge. Caption: 'An object at rest stays at rest!' Later, he's sliding on ice and can't stop. Caption: '...and an object in motion stays in motion!' **Panel 2 (2nd Law):** Inertia Man needs to move a giant boulder. He pushes gently (small F), it barely moves (small a). He pushes with all his might (large F), it moves faster (large a). Caption: 'F=ma! More force, more acceleration!' **Panel 3 (3rd Law):** He punches a wall (action). The wall 'punches' him back (reaction) and his hand hurts. Caption: 'For every action, an equal and opposite reaction! Ouch!'" },
+                    { level: "Creating", q: "Formulate an experiment to measure the coefficient of static friction between a wooden block and a tabletop.", a: "1. **Setup:** Place a wooden block on a flat tabletop. Attach a string to the block, run it over a pulley at the edge of the table, and connect it to a weight hanger. 2. **Procedure:** Start adding small, known weights to the hanger. Continue adding weight until the block *just begins* to slide. 3. **Measurement:** Record the total mass on the hanger that caused the block to move. Calculate the weight (F = mg). This is the maximum static friction force (fₛ). Also, measure the mass of the wooden block and calculate its weight, which equals the normal force (N). 4. **Calculation:** The coefficient of static friction is μₛ = fₛ / N." },
+                    { level: "Creating", q: "Design a simple 'seatbelt' for an egg in a toy car to demonstrate inertia in a collision.", a: "1. **Car:** Use a small toy car. 2. **Passenger:** A raw egg. 3. **Seatbelt:** Use a wide rubber band or a strip of cloth. Place the egg on the car and secure it firmly but gently with the rubber band. 4. **Test:** Create a small ramp and a solid barrier (like a book) at the bottom. First, let the car roll down without the egg being secured. It will fly off during the collision. Then, repeat the test with the egg secured by the 'seatbelt'. The seatbelt provides the unbalanced force needed to stop the egg along with the car, preventing it from flying off. This demonstrates how seatbelts counter inertia." }
+                ],
+                ch3: [
+                    { level: "Remembering", q: "What is the Green Revolution?", a: "The Green Revolution refers to a period of significant increase in agricultural production, particularly food grains like wheat and rice, achieved through the use of high-yield variety seeds, fertilizers, pesticides, and improved irrigation." },
+                    { level: "Remembering", q: "List the three main categories of activities for improving crop yields.", a: "The three major groups of activities for improving crop yields are: 1. Crop variety improvement, 2. Crop production improvement, and 3. Crop protection management." },
+                    { level: "Remembering", q: "Define animal husbandry.", a: "Animal husbandry is the scientific management of domestic animal livestock. It includes various aspects such as feeding, breeding, disease control, and providing shelter." },
+                    { level: "Remembering", q: "What is the difference between a milch animal and a draught animal?", a: "A milch animal is a female animal, like a cow or buffalo, that is raised for producing milk. A draught animal is one used for farm labor such as tilling, irrigation, and carting." },
+                    { level: "Remembering", q: "What is aquaculture?", a: "Aquaculture is the farming of aquatic organisms such as fish, crustaceans, molluscs, and aquatic plants. It involves cultivating freshwater and saltwater populations under controlled conditions." },
+                    { level: "Remembering", q: "Name two Kharif crops and two Rabi crops.", a: "Kharif crops: Paddy (rice), Soyabean. Rabi crops: Wheat, Gram (chana)." },
+                    { level: "Remembering", q: "What is pasturage and what is its importance in bee-keeping?", a: "Pasturage refers to the flowers available to bees for collecting nectar and pollen. Its quality and quantity determine the taste and yield of honey." },
+                    { level: "Remembering", q: "Define the term 'weed' and give one example.", a: "A weed is an unwanted plant in a cultivated field that competes with the main crop for resources like nutrients, light, and water. Example: Xanthium (gokhroo)." },
+                    { level: "Understanding", q: "Explain the difference between Kharif and Rabi crops.", a: "Kharif crops are grown in the rainy season (monsoon), typically from June to October. Examples include paddy (rice) and maize. Rabi crops are grown in the winter season, from November to April. Examples include wheat and gram." },
+                    { level: "Understanding", q: "Why is hybridisation a useful technique for crop variety improvement?", a: "Hybridisation involves crossing genetically dissimilar plants to combine desirable characteristics from both parents into a new variety. For example, one could cross a high-yielding variety with a disease-resistant variety to create a new strain that has both high yield and disease resistance." },
+                    { level: "Understanding", q: "Compare the use of manure and fertilizers in maintaining soil fertility.", a: "Manure is organic, adds humus to the soil, improves soil structure and water retention, and supplies a wide range of nutrients in small quantities. Fertilizers are synthetic, nutrient-specific (supplying N, P, K), and provide nutrients in high concentrations. While fertilizers give quick results, long-term use can degrade soil health. Manure improves soil health over the long term." },
+                    { level: "Understanding", q: "What is composite fish culture and why is it beneficial?", a: "Composite fish culture is a system where a combination of five or six different fish species are grown together in a single fishpond. It is beneficial because the species are selected to have different food habits and feeding zones (surface, middle, bottom). This ensures that all the food available in the pond is utilized without competition, leading to a much higher overall fish yield." },
+                    { level: "Understanding", q: "Explain the difference between broilers and layers in poultry farming.", a: "Broilers are chickens raised specifically for meat production. They are fed a protein-rich diet to promote fast growth and are ready for market in a few weeks. Layers are female chickens raised for egg production. Their diet is managed to support sustained egg-laying over a longer period." },
+                    { level: "Understanding", q: "How do biotic and abiotic factors affect crop production?", a: "Biotic factors are living organisms that can harm crops, such as diseases (caused by bacteria, fungi), insects, and weeds. Abiotic factors are non-living environmental factors like drought, salinity, water logging, heat, and cold that can cause stress and reduce crop yields." },
+                    { level: "Understanding", q: "What is meant by 'lactation period' in cattle farming?", a: "The lactation period is the period of time after the birth of a calf during which a cow produces milk. The length of this period is a key factor in determining the total milk production of the animal." },
+                    { level: "Understanding", q: "Differentiate between mixed cropping and intercropping.", a: "In mixed cropping, seeds of two or more crops are mixed together and then sown in the field without a specific pattern. In intercropping, two or more crops are grown simultaneously in the same field but in a definite pattern, such as alternating rows." },
+                    { level: "Understanding", q: "What is organic farming?", a: "Organic farming is a system that avoids or largely excludes the use of synthetic fertilizers, pesticides, and other chemical inputs. It relies on techniques like crop rotation, green manure, compost, and biological pest control to maintain soil fertility and manage pests." },
+                    { level: "Applying", q: "A farmer wants to insure against the total failure of a single crop due to unpredictable weather. Which cropping pattern should they adopt and why?", a: "The farmer should adopt mixed cropping or intercropping. In mixed cropping, two or more crops are grown simultaneously on the same land. If conditions are unfavorable for one crop, the other(s) may still survive and provide some yield, reducing the risk of complete financial loss." },
+                    { level: "Applying", q: "How are weeds controlled in an agricultural field? List at least three methods.", a: "1. **Mechanical Removal:** Physical removal of weeds by hand (weeding) or by using tools like a hoe or ploughing. 2. **Chemical Control:** Using chemical herbicides that specifically target and kill weeds without harming the crop. 3. **Preventive/Cultural Methods:** Proper seedbed preparation, timely sowing, and using cropping patterns like intercropping and crop rotation can suppress weed growth." },
+                    { level: "Applying", q: "Identify the macro-nutrients and micro-nutrients from the following list: Iron, Nitrogen, Zinc, Potassium, Boron, Phosphorus.", a: "<b>Macro-nutrients:</b> Nitrogen, Potassium, Phosphorus. <br><b>Micro-nutrients:</b> Iron, Zinc, Boron." },
+                    { level: "Applying", q: "Suggest a suitable crop rotation for a farmer in a region with good irrigation to maintain soil fertility.", a: "A good crop rotation would be to alternate between a cereal crop and a leguminous crop. For example: Rice (cereal) followed by Peas or Gram (legume). The rice crop uses up a lot of nitrogen from the soil. The leguminous crop, through its root nodules containing nitrogen-fixing bacteria, replenishes the soil's nitrogen content, thus maintaining fertility naturally." },
+                    { level: "Applying", q: "What desirable traits would you look for when cross-breeding an exotic cattle breed like Jersey with an indigenous breed like Sahiwal?", a: "The goal is to combine the best traits of both. From the Jersey (exotic) breed, the desirable trait is a long lactation period, leading to higher milk production. From the Sahiwal (indigenous) breed, the desirable trait is excellent resistance to local diseases and harsh climatic conditions. The cross-breed would ideally be a high-yielding and resilient animal." },
+                    { level: "Applying", q: "You want to start a composite fish farm. Name one surface feeder, one middle-zone feeder, and one bottom feeder you would choose.", a: "Surface feeder: Catla. Middle-zone feeder: Rohu. Bottom feeder: Mrigal or Common Carp." },
+                    { level: "Applying", q: "How can storage losses of grains be prevented? Mention two methods.", a: "1. **Proper Drying:** Grains must be properly dried first in sunlight and then in shade to reduce the moisture content, which inhibits the growth of fungi and pests. 2. **Fumigation:** Using chemicals (fumigants) that can kill pests in storage godowns before the grains are stored." },
+                    { level: "Applying", q: "What kind of diet is required for broilers and why?", a: "Broilers require a diet that is rich in protein and fat, with adequate vitamins (especially A and K). This is to support their very fast growth rate and achieve the desired body weight for meat production quickly." },
+                    { level: "Applying", q: "Identify a Kharif crop and a Rabi crop from this list: Mustard, Cotton, Peas, Maize.", a: "Kharif crops: Cotton, Maize. Rabi crops: Mustard, Peas." },
+                    { level: "Applying", q: "What is green manure and how is it prepared?", a: "Green manure is a type of organic fertilizer. It is prepared by growing fast-growing plants like sun hemp or guar before sowing the main crop. These plants are then ploughed back into the soil while they are still green. They decompose and enrich the soil, particularly with nitrogen and phosphorus." },
+                    { level: "Analyzing", q: "Analyze the impact of excessive use of fertilizers and pesticides on the environment.", a: "Excessive fertilizer use leads to water pollution (eutrophication) when unused chemicals are washed into rivers and lakes, causing algal blooms that kill aquatic life. It can also degrade soil fertility over time by killing beneficial microorganisms. Excessive pesticide use can kill non-target organisms (like pollinators), lead to pesticide resistance in pests, and contaminate soil and water, with harmful residues entering the food chain." },
+                    { level: "Analyzing", q: "Compare and contrast capture fishing and culture fishery (aquaculture).", a: "<b>Capture Fishing:</b> Involves harvesting fish from their natural habitats (oceans, rivers, lakes). The yield is dependent on natural fish populations and can be unpredictable. Overfishing is a major risk. <br><b>Culture Fishery (Aquaculture):</b> Involves farming fish in controlled or semi-controlled environments (ponds, tanks). The yield can be controlled and is generally higher and more predictable. It helps meet demand without further depleting wild stocks." },
+                    { level: "Analyzing", q: "Why is bee-keeping considered a beneficial activity for farmers beyond just honey production?", a: "Besides providing honey and beeswax as additional sources of income, bees are crucial pollinators. Having an apiary near a farm significantly improves the pollination of surrounding crops (like sunflower, mustard, and fruit orchards). This leads to better seed and fruit set, thereby increasing the overall crop yield for the farmer." },
+                    { level: "Analyzing", q: "Break down the factors that can cause losses of grains during storage.", a: "Storage losses are caused by two types of factors: 1. **Biotic Factors:** These are living organisms, including insects (like weevils), rodents, fungi (molds), mites, and bacteria that consume or spoil the grain. 2. **Abiotic Factors:** These are non-living factors, primarily inappropriate moisture levels and high temperatures in the storage facility, which promote the growth of fungi and insects and can also lead to germination or degradation of the grain." },
+                    { level: "Analyzing", q: "Why is it necessary to develop crop varieties with wider adaptability?", a: "Wider adaptability helps in stabilizing crop production across different and often unpredictable environmental conditions. A single variety that can perform well in different climates, soils, and weather patterns reduces the risk of crop failure and ensures a more consistent food supply. It simplifies seed production and distribution." },
+                    { level: "Analyzing", q: "What is the main problem with using local fish seed for composite fish culture and how is it overcome?", a: "The main problem is the lack of availability of pure, good-quality seed. Seed collected from the wild often gets mixed with the seed of other undesirable species. This problem is overcome by using hormonal stimulation techniques to induce breeding of the desired fish species in controlled pond environments, ensuring a supply of pure seed." },
+                    { level: "Analyzing", q: "Why are dwarfness in cereals and tallness in fodder crops considered desirable agronomic characteristics?", a: "<b>Dwarfness in cereals:</b> Shorter, sturdier plants consume fewer nutrients for vegetative growth, directing more resources to grain production. They are also less prone to being flattened by wind and rain (lodging). <br><b>Tallness in fodder crops:</b> For fodder crops, the goal is to maximize the amount of vegetative matter (leaves and stems) for animal feed. Tallness and profuse branching lead to a higher biomass yield per plant." },
+                    { level: "Analyzing", q: "How does intercropping help in pest control?", a: "Intercropping can reduce pest outbreaks because pests that feed on one specific crop find it harder to spread when plants of another, non-host crop are in the way. It disrupts their movement and can also harbor natural predators of the pests." },
+                    { level: "Analyzing", q: "What is the correlation between a farmer's financial condition and their agricultural practices?", a: "A farmer's financial condition (purchasing capacity) directly influences their ability to afford inputs like high-quality seeds, fertilizers, pesticides, and irrigation systems. Farmers with more financial resources can adopt 'high-cost' production practices, which generally lead to higher yields, while those with fewer resources are often limited to 'low-cost' or 'no-cost' practices with lower potential yields." },
+                    { level: "Evaluating", q: "Evaluate the statement: 'The Green Revolution solved India's food problem completely.'", a: "This statement is an oversimplification. While the Green Revolution significantly increased food grain production and helped India achieve self-sufficiency, it also had drawbacks. It led to environmental issues like soil degradation and water depletion, increased income inequality between rich and poor farmers, and focused mainly on a few crops like wheat and rice. So, while it was a massive success in production, it created other challenges and did not completely solve problems like malnutrition and farmer distress." },
+                    { level: "Evaluating", q: "Which is a more sustainable long-term strategy for soil health: organic farming or conventional chemical-based farming? Justify your answer.", a: "Organic farming is a more sustainable long-term strategy. It focuses on building soil health by using manure, compost, and crop rotation, which improves soil structure, fertility, and microbial life. Conventional farming, with its heavy reliance on synthetic fertilizers and pesticides, can lead to soil degradation, loss of biodiversity, and environmental pollution over time, making it less sustainable." },
+                    { level: "Evaluating", q: "A farmer uses high-quality seeds but does not adopt irrigation or use fertilizers. Will they get the most benefit? Explain.", a: "No, they will not get the most benefit. High-quality, high-yield variety (HYV) seeds are designed to have a high genetic potential for yield, but they can only realize this potential with optimal inputs. They require adequate water (irrigation) and nutrients (fertilizers) to support their rapid growth and high productivity. Without these inputs, the high-quality seeds will likely perform poorly, possibly even worse than traditional varieties." },
+                    { level: "Evaluating", q: "Assess the role of animal husbandry in the livelihood of a small-scale farmer in India.", a: "Animal husbandry is critically important for small-scale farmers. It provides a diversified and stable source of income, supplementary to crop farming which can be seasonal and risky. Livestock like cattle provide milk for consumption and sale, and draught power for farming. Manure is a valuable organic fertilizer. Poultry provides eggs and meat. This integrated system makes the farm more resilient and economically viable." },
+                    { level: "Evaluating", q: "Is it better to farm with indigenous (local) breeds or exotic (foreign) breeds of livestock? Discuss the pros and cons.", a: "There is no single 'better' option; it depends on the goal. **Exotic Breeds:** Pros - Typically have very high production (e.g., more milk or eggs). Cons - Are often less resistant to local diseases and climate, and require high-cost, specialized feed and management. **Indigenous Breeds:** Pros - Are well-adapted to the local environment, highly disease-resistant, and can thrive on cheaper, local feed. Cons - Generally have lower production rates. A common strategy is cross-breeding to combine the high production of exotic breeds with the resilience of indigenous breeds." },
+                    { level: "Evaluating", q: "Can simply increasing food grain production solve the problem of malnutrition and hunger? Evaluate this idea.", a: "No. Increasing production is only part of the solution. This addresses food availability. However, people must also have access to food, which depends on their purchasing power. If people don't have enough income, they can't buy food even if it's stored in warehouses. Therefore, food security depends on both availability and access. Increasing farmers' incomes is crucial to combat hunger." },
+                    { level: "Evaluating", q: "Judge the impact of intensive cultivation on natural resources. Is it a sustainable practice?", a: "Intensive cultivation, while increasing production, puts a heavy strain on natural resources. It can lead to rapid depletion of groundwater, soil degradation through loss of organic matter and nutrient imbalance, and loss of biodiversity. It is generally not sustainable in the long run without careful management practices like organic farming, water conservation, and integrated farming systems to mitigate the damage." },
+                    { level: "Creating", q: "Design an integrated farming system for a small 1-hectare farm that includes crops, livestock, and one other component to maximize sustainability and income.", a: "1. **Crops (0.8 ha):** Use intercropping (maize + legumes) and crop rotation (rice-wheat-moong). Grow vegetables on the farm boundaries. 2. **Livestock (0.2 ha):** Keep 2 cross-bred cows for milk (for sale and home use) and manure. The crop residue (straw) can be used as fodder. 3. **Other Component:** Add a bee-keeping unit (apiary). The bees will pollinate the crops, increasing their yield, and produce honey and wax for extra income. 4. **Sustainability Loop:** Cow dung is used for a biogas plant (provides cooking fuel) and the slurry is used as excellent manure for the crops. This reduces reliance on external inputs like fertilizers and fuel, creating a closed-loop, sustainable system." },
+                    { level: "Creating", q: "Develop a plan for a school's backyard to grow vegetables using organic farming principles.", a: "1. **Soil Preparation:** Create raised beds. Instead of fertilizers, enrich the soil with compost made from school canteen waste and vermicompost from a small worm bin. 2. **Seed Selection:** Choose local, open-pollinated varieties of seasonal vegetables like tomatoes, spinach, and beans. 3. **Nutrient Management:** Use the compost and a liquid fertilizer made from 'jeevamrut' (a fermented mixture of cow dung, urine, jaggery, and flour). 4. **Pest Control:** Instead of pesticides, use neem oil spray and plant marigolds (a natural pest repellent) around the vegetable beds. Encourage beneficial insects like ladybugs. 5. **Watering:** Use a drip irrigation system to conserve water." },
+                    { level: "Creating", q: "Propose a new high-yield wheat variety. What characteristics would you aim to combine through genetic manipulation or hybridisation?", a: "The new variety, 'Sustain-Wheat', would be created by combining the following traits: 1. **High Yield:** From a current high-yielding variety. 2. **Drought Resistance:** A gene from a hardy millet variety that allows the plant to survive with less water. 3. **Disease Resistance:** Genes providing resistance to common fungal diseases like rust. 4. **Improved Nutritional Quality:** Enhanced protein and zinc content (biofortification). 5. **Strong Stems (Dwarfness):** To prevent the plant from lodging (bending over) in wind and rain, which is common in heavy-grained varieties." },
+                    { level: "Creating", q: "Formulate a feeding plan for a broiler chicken to achieve maximum growth in 6 weeks.", a: "The plan would have phases: **Week 1-2 (Starter Phase):** High protein (22-23%) and high energy feed to support rapid initial growth. The feed should be finely crumbled. **Week 3-4 (Grower Phase):** Slightly lower protein (20-21%) but still high energy. The feed texture can be slightly coarser. **Week 5-6 (Finisher Phase):** Protein reduced further (18-19%) and energy content maximized to build up flesh and fat. The feed is given as pellets. The diet should be supplemented with vitamins (A, D, K) and minerals throughout. Fresh water must be available at all times." },
+                    { level: "Creating", q: "Invent a new method of pest control that is biological and does not harm the environment.", a: "Method Name: 'Phero-Drones'. Small, solar-powered drones are equipped with species-specific pheromone dispensers. The drones fly over the crop field in a programmed pattern, releasing tiny, targeted puffs of the pest's mating pheromone. This confuses the male insects, preventing them from finding females and mating (a technique called 'mating disruption'). This is highly specific, leaves no residue, doesn't harm beneficial insects, and prevents the pest population from growing without using any toxic chemicals." },
+                    { level: "Creating", q: "Design a poster for a campaign promoting crop rotation among local farmers. What would be its key message?", a: "The poster would show a vibrant, healthy field on one side and a dry, barren field on the other. **Headline:** 'Don't Let Your Soil Get Tired!' **Key Message:** 'Feed your soil, and it will feed you. Rotate your crops! Plant legumes after cereals to naturally boost fertility, reduce pests, and increase your profits year after year. A smart rotation means sustainable cultivation.'" },
+                    { level: "Creating", q: "Compose a catchy slogan for 'White Revolution'.", a: "Slogan: 'A Flood of Milk, A Wave of Progress.' or 'White Revolution: Powering a Healthier, Stronger Nation, One Glass at a Time.'" }
+                ]
+            },
+            quiz: {
+                ch1: [
+                    { topic: "Pure Substances", q: "Which of the following is a pure substance?", options: ["Milk", "Air", "Iron", "Saltwater"], a: 2 },
+                    { topic: "Mixtures", q: "A mixture of sand and water is an example of a:", options: ["Solution", "Colloid", "Suspension", "Compound"], a: 2 },
+                    { topic: "Colloids", q: "The path of light becomes visible when it passes through a:", options: ["True Solution", "Colloidal Solution", "Pure Solvent", "Saturated Solution"], a: 1 },
+                    { topic: "Separation Techniques", q: "Which method is used to separate cream from milk?", options: ["Filtration", "Evaporation", "Sublimation", "Centrifugation"], a: 3 },
+                    { topic: "Mixtures", q: "Brass is an example of a:", options: ["Compound", "Solid Solution (Alloy)", "Heterogeneous Mixture", "Element"], a: 1 },
+                    { topic: "Solutions", q: "In a solution of sugar and water, which is the solute?", options: ["Water", "Sugar", "Both", "Neither"], a: 1 },
+                    { topic: "Colloids", q: "Which of the following will NOT show the Tyndall effect?", options: ["Milk", "Starch Solution", "Fog", "Salt Solution"], a: 3 },
+                    { topic: "States of Matter", q: "The process of converting a solid directly to a gas is called:", options: ["Evaporation", "Condensation", "Sublimation", "Fusion"], a: 2 },
+                    { topic: "Solutions", q: "A solution that cannot dissolve more solute at a given temperature is called:", options: ["Unsaturated", "Supersaturated", "Saturated", "Concentrated"], a: 2 },
+                    { topic: "Physical & Chemical Changes", q: "Which of the following is a chemical change?", options: ["Melting of ice", "Dissolving salt in water", "Rusting of iron", "Boiling of water"], a: 2 },
+                    { topic: "Colloids", q: "What are the components of a colloidal solution called?", options: ["Solute and Solvent", "Elements and Compounds", "Dispersed phase and Dispersing medium", "Mixture and Pure Substance"], a: 2 },
+                    { topic: "Separation Techniques", q: "Which separation technique is based on the difference in boiling points?", options: ["Chromatography", "Distillation", "Sublimation", "Filtration"], a: 1 },
+                    { topic: "Colloids", q: "An example of a gel is:", options: ["Milk", "Smoke", "Cheese", "Fog"], a: 2 },
+                    { topic: "Colloids", q: "Fog is a colloid of:", options: ["Gas in Liquid", "Liquid in Gas", "Solid in Gas", "Gas in Gas"], a: 1 },
+                    { topic: "Separation Techniques", q: "A mixture of oil and water can be separated by:", options: ["Filtration", "A separating funnel", "Evaporation", "Sublimation"], a: 1 },
+                    { topic: "Pure Substances", q: "Which of the following has a fixed composition by mass?", options: ["Air", "Water (H₂O)", "Brass", "Soil"], a: 1 },
+                    { topic: "Mixtures", q: "The particles of a suspension are:", options: ["Smaller than 1 nm", "Between 1-1000 nm", "Visible to the naked eye", "Invisible under a microscope"], a: 2 },
+                    { topic: "Solutions", q: "Tincture of iodine is a solution of:", options: ["Iodine in water", "Iodine in alcohol", "Alcohol in iodine", "Potassium in iodine"], a: 1 },
+                    { topic: "Elements", q: "Which of the following is NOT a property of metals?", options: ["Lustrous", "Ductile", "Poor conductor of heat", "Malleable"], a: 2 },
+                    { topic: "Mixtures", q: "The constituents of a __________ retain their individual properties.", options: ["Compound", "Mixture", "Element", "Molecule"], a: 1 },
+                    { topic: "Separation Techniques", q: "To separate different pigments from an extract of flower petals, one should use:", options: ["Distillation", "Centrifugation", "Chromatography", "Crystallization"], a: 2 },
+                    { topic: "Colloids", q: "Shaving cream is an example of a:", options: ["Sol", "Emulsion", "Foam", "Aerosol"], a: 2 },
+                    { topic: "Colloids", q: "Smoke is an example of:", options: ["Solid dispersed in gas", "Gas dispersed in solid", "Liquid dispersed in gas", "Solid dispersed in liquid"], a: 0 },
+                    { topic: "Colloids", q: "The zig-zag movement of colloidal particles is known as:", options: ["Tyndall Effect", "Brownian Motion", "Sublimation", "Electrophoresis"], a: 1 },
+                    { topic: "Elements", q: "Which of the following is a metalloid?", options: ["Gold", "Carbon", "Silicon", "Sodium"], a: 2 },
+                    { topic: "Colloids", q: "What is the continuous phase in a colloid known as?", options: ["Solute", "Dispersed phase", "Dispersing medium", "Solvent"], a: 2 },
+                    { topic: "Mixtures", q: "Which of the following is a homogeneous mixture?", options: ["Soil", "Vinegar", "Sand in water", "Wood"], a: 1 },
+                    { topic: "Elements", q: "The property of metals to be drawn into wires is called:", options: ["Malleability", "Sonority", "Lustre", "Ductility"], a: 3 },
+                    { topic: "Physical & Chemical Changes", q: "Burning of paper is a:", options: ["Physical change", "Chemical change", "Reversible change", "State change"], a: 1 },
+                    { topic: "Solutions", q: "A solution containing 20g of solute in 180g of solvent has a mass percentage of:", options: ["10%", "11.1%", "20%", "90%"], a: 0 },
+                    { topic: "Elements", q: "Which element is a liquid at room temperature?", options: ["Bromine", "Chlorine", "Iodine", "Sodium"], a: 0 },
+                    { topic: "Colloids", q: "In an aerosol, the dispersing medium is:", options: ["Solid", "Liquid", "Gas", "Plasma"], a: 2 },
+                    { topic: "Separation Techniques", q: "A separating funnel is used to separate a mixture of:", options: ["Two solids", "A solid and a liquid", "Two miscible liquids", "Two immiscible liquids"], a: 3 },
+                    { topic: "Pure Substances", q: "Which of these is a compound?", options: ["Graphite", "Gasoline", "Methane (CH₄)", "Air"], a: 2 },
+                    { topic: "Solutions", q: "The particles of a true solution:", options: ["Settle down", "Can be seen with a microscope", "Scatter light", "Cannot be separated by filtration"], a: 3 },
+                    { topic: "Solutions", q: "A saturated solution becomes unsaturated upon:", options: ["Cooling", "Heating", "Adding more solute", "Evaporation"], a: 1 },
+                    { topic: "Separation Techniques", q: "Butter can be separated from curd by:", options: ["Filtration", "Centrifugation", "Sedimentation", "Evaporation"], a: 1 },
+                    { topic: "Separation Techniques", q: "Which process is used to obtain a pure solid from an impure sample?", options: ["Evaporation", "Distillation", "Chromatography", "Crystallization"], a: 3 },
+                    { topic: "Mixtures", q: "Milk of magnesia is a:", options: ["Solution", "Suspension", "True solution", "Homogeneous mixture"], a: 1 },
+                    { topic: "Mixtures", q: "The components of which type of mixture can be seen with the naked eye?", options: ["Solution", "Colloid", "Suspension", "Alloy"], a: 2 },
+                    { topic: "Physical & Chemical Changes", q: "The formation of water from hydrogen and oxygen is a:", options: ["Physical change", "Nuclear reaction", "Chemical change", "Sublimation"], a: 2 },
+                    { topic: "Pure Substances", q: "Which of the following is NOT a mixture?", options: ["Sugar solution", "Air", "Blood", "Calcium Carbonate"], a: 3 },
+                    { topic: "Solutions", q: "The 'solute' in an aerated drink is:", options: ["Water", "Sugar", "Carbon Dioxide", "Flavoring"], a: 2 },
+                    { topic: "Separation Techniques", q: "Which method is suitable to separate salt from sea water?", options: ["Filtration", "Decantation", "Evaporation", "Sublimation"], a: 2 },
+                    { topic: "Separation Techniques", q: "The property used in chromatography for separation is:", options: ["Different boiling points", "Different solubilities", "Different densities", "Magnetic property"], a: 1 },
+                    { topic: "Colloids", q: "Which is an example of an emulsion?", options: ["Cloud", "Jelly", "Milk", "Sponge"], a: 2 },
+                    { topic: "Separation Techniques", q: "A mixture of ammonium chloride and salt can be separated by:", options: ["Filtration", "Sublimation", "Chromatography", "Distillation"], a: 1 },
+                    { topic: "Elements", q: "Which of the following is sonorous?", options: ["Wood", "Iron", "Rubber", "Plastic"], a: 1 },
+                    { topic: "Physical & Chemical Changes", q: "The process of a liquid changing into vapor is called:", options: ["Condensation", "Melting", "Freezing", "Evaporation"], a: 3 },
+                    { topic: "Elements", q: "How many elements are liquid at a temperature slightly above room temperature (303 K)?", options: ["One", "Two", "Three", "Four"], a: 1 }
+                ],
+                ch2: [
+                    { topic: "Inertia & Mass", q: "The inertia of an object is a measure of its:", options: ["Velocity", "Acceleration", "Mass", "Force"], a: 2 },
+                    { topic: "Newton's First Law", q: "Newton's First Law of Motion is also called the Law of:", options: ["Action-Reaction", "Momentum", "Inertia", "Gravity"], a: 2 },
+                    { topic: "Newton's Second Law", q: "A force of 10 N acts on a body of mass 2 kg. What is the acceleration?", options: ["20 m/s²", "5 m/s²", "0.2 m/s²", "12 m/s²"], a: 1 },
+                    { topic: "Momentum", q: "Momentum is the product of:", options: ["Mass and acceleration", "Force and time", "Mass and velocity", "Force and distance"], a: 2 },
+                    { topic: "Force", q: "The SI unit of force is:", options: ["Joule", "Watt", "Pascal", "Newton"], a: 3 },
+                    { topic: "Inertia & Mass", q: "When a bus suddenly stops, passengers tend to fall forward due to:", options: ["Inertia of rest", "Inertia of motion", "Gravity", "Friction"], a: 1 },
+                    { topic: "Newton's Third Law", q: "Action and reaction forces act on:", options: ["The same body", "Different bodies", "The same body in opposite directions", "Different bodies in the same direction"], a: 1 },
+                    { topic: "Conservation of Momentum", q: "A bullet of mass 0.01 kg is fired from a gun of mass 5 kg. If the speed of the bullet is 200 m/s, the recoil speed of the gun is:", options: ["-0.4 m/s", "0.4 m/s", "-2 m/s", "2 m/s"], a: 0 },
+                    { topic: "Newton's First Law", q: "An object moving at a constant velocity has a net force of:", options: ["Zero", "Equal to its weight", "Increasing", "Decreasing"], a: 0 },
+                    { topic: "Newton's Second Law", q: "The rate of change of momentum of an object is proportional to the:", options: ["Mass of the object", "Velocity of the object", "Applied unbalanced force", "Inertia of the object"], a: 2 },
+                    { topic: "Newton's Second Law", q: "Why does a karate player break a slab of ice with a single blow?", options: ["They apply a large force", "They increase the time of impact", "They reduce the momentum to zero in a very short time", "They use the principle of inertia"], a: 2 },
+                    { topic: "Newton's Second Law", q: "If the mass of an object is doubled while the net force remains constant, its acceleration will be:", options: ["Doubled", "Halved", "Quadrupled", "Unchanged"], a: 1 },
+                    { topic: "Newton's Third Law", q: "A rocket works on the principle of:", options: ["Conservation of Mass", "Conservation of Energy", "Conservation of Momentum", "Newton's First Law"], a: 2 },
+                    { topic: "Inertia & Mass", q: "Which of the following has the most inertia?", options: ["A bicycle", "A train", "A rubber ball", "A five-rupee coin"], a: 1 },
+                    { topic: "Momentum", q: "The product of force and time is known as:", options: ["Work", "Power", "Impulse", "Pressure"], a: 2 },
+                    { topic: "Force", q: "Friction is a force that always:", options: ["Opposes motion", "Aids motion", "Acts downwards", "Acts upwards"], a: 0 },
+                    { topic: "Newton's Second Law", q: "An 8000 kg engine pulls a train of 5 wagons, each of 2000 kg. The total mass to be accelerated is:", options: ["8000 kg", "10000 kg", "18000 kg", "2000 kg"], a: 2 },
+                    { topic: "Momentum", q: "The momentum of an object of mass 'm' moving with velocity 'v' is:", options: ["mv²", "½mv²", "ma", "mv"], a: 3 },
+                    { topic: "Newton's Third Law", q: "If you push against a wall, the wall pushes back on you with a force that is:", options: ["Smaller than your push", "Larger than your push", "Equal and opposite to your push", "Zero"], a: 2 },
+                    { topic: "Force", q: "To change the motion of an object, you need to apply a/an:", options: ["Balanced force", "Unbalanced force", "Frictional force", "Gravitational force"], a: 1 },
+                    { topic: "Newton's Second Law", q: "An object of mass 2 kg is at rest. A force of 5 N is applied for 2 s. Its final velocity is:", options: ["5 m/s", "2.5 m/s", "10 m/s", "2 m/s"], a: 0 },
+                    { topic: "Momentum", q: "What is the momentum of a 10 kg dumb-bell that is at rest on the floor?", options: ["10 kg m/s", "100 kg m/s", "0 kg m/s", "1 kg m/s"], a: 2 },
+                    { topic: "Inertia & Mass", q: "Safety belts in cars are used to prevent accidents due to:", options: ["Momentum", "Inertia", "Force", "Pressure"], a: 1 },
+                    { topic: "Momentum", q: "A hockey ball of mass 200 g travelling at 10 m/s is struck to return it along its original path with 5 m/s. The change in momentum is:", options: ["1 kg m/s", "2 kg m/s", "3 kg m/s", "0.5 kg m/s"], a: 2 },
+                    { topic: "Newton's Third Law", q: "According to the third law of motion, action and reaction have the same magnitude but different:", options: ["Directions", "Objects they act on", "Time of action", "Both A and B"], a: 3 },
+                    { topic: "Newton's Second Law", q: "A 1200 kg car moving at 10 m/s hits a wall and stops in 0.1 s. The force exerted by the car on the wall is:", options: ["1200 N", "12000 N", "120 N", "120000 N"], a: 3 },
+                    { topic: "Newton's First Law", q: "If an object experiences a net zero unbalanced force, it can be:", options: ["At rest only", "Moving with non-zero velocity only", "At rest or moving with constant velocity", "Accelerating"], a: 2 },
+                    { topic: "Conservation of Momentum", q: "The law of conservation of momentum applies to a/an:", options: ["Single body", "Isolated system", "System under gravity", "Any system"], a: 1 },
+                    { topic: "Inertia & Mass", q: "The tendency of undisturbed objects to stay at rest is:", options: ["Inertia of motion", "Inertia of direction", "Inertia of rest", "Velocity"], a: 2 },
+                    { topic: "Force", q: "A force is a:", options: ["Push only", "Pull only", "Push or pull", "None of the above"], a: 2 },
+                    { topic: "Newton's Second Law", q: "The acceleration produced in an object is inversely proportional to its:", options: ["Force", "Velocity", "Mass", "Momentum"], a: 2 },
+                    { topic: "Inertia & Mass", q: "When a carpet is beaten with a stick, dust comes out due to:", options: ["Inertia of rest of dust", "Inertia of motion of carpet", "Force of the stick", "Both A and B"], a: 3 },
+                    { topic: "Momentum", q: "A body of mass 5 kg has a momentum of 10 kg m/s. Its velocity is:", options: ["2 m/s", "50 m/s", "0.5 m/s", "5 m/s"], a: 0 },
+                    { topic: "Newton's Third Law", q: "Action-reaction forces are always:", options: ["Equal and opposite", "Unequal", "Acting on the same body", "In the same direction"], a: 0 },
+                    { topic: "Newton's Second Law", q: "A motorcar is moving with 30 m/s and it takes 4 s to stop. If mass is 1000 kg, the stopping force is:", options: ["-30000 N", "-4000 N", "-7500 N", "-12000 N"], a: 2 },
+                    { topic: "Momentum", q: "Which has a greater momentum: a 1000 kg car at 5 m/s or a 10 kg ball at 400 m/s?", options: ["The car", "The ball", "They are equal", "Cannot be determined"], a: 0 },
+                    { topic: "Force", q: "A force can change the:", options: ["Speed of an object", "Direction of motion", "Shape of an object", "All of the above"], a: 3 },
+                    { topic: "Newton's First Law", q: "The net force on an object is zero. Which statement is false?", options: ["The object is at rest", "The object is moving at constant velocity", "The object is accelerating", "The object's momentum is constant"], a: 2 },
+                    { topic: "Newton's Third Law", q: "When a sailor jumps forward from a boat, the boat moves backward. This illustrates:", options: ["Newton's First Law", "Newton's Second Law", "Newton's Third Law", "Law of Inertia"], a: 2 },
+                    { topic: "Force", q: "The unit kg m/s² is equivalent to:", options: ["Joule", "Pascal", "Watt", "Newton"], a: 3 },
+                    { topic: "Force", q: "Force is a vector quantity, which means it has both magnitude and:", options: ["Mass", "Direction", "Inertia", "Velocity"], a: 1 },
+                    { topic: "Inertia & Mass", q: "Galileo's experiments on inclined planes led to the concept of:", options: ["Gravity", "Momentum", "Inertia", "Force"], a: 2 },
+                    { topic: "Momentum", q: "If an object's velocity is zero, its momentum is:", options: ["Positive", "Negative", "Zero", "Infinite"], a: 2 },
+                    { topic: "Newton's First Law", q: "The force required to maintain an object at a constant velocity in free space is:", options: ["Zero", "Equal to its weight", "Infinite", "Very large"], a: 0 },
+                    { topic: "Newton's Second Law", q: "A goalkeeper in football pulls his hands backwards after catching the ball to:", options: ["Apply more force", "Increase the rate of change of momentum", "Decrease the rate of change of momentum", "Exert a larger impulse"], a: 2 },
+                    { topic: "Force", q: "The weight of an object is a measure of the:", options: ["Force of gravity on it", "Its inertia", "Its mass", "Its momentum"], a: 0 },
+                    { topic: "Newton's Third Law", q: "When you are standing on the ground, the ground exerts a force on you called the:", options: ["Gravitational force", "Frictional force", "Normal force", "Applied force"], a: 2 },
+                    { topic: "Momentum", q: "The impulse experienced by an object is equal to the change in its:", options: ["Velocity", "Momentum", "Force", "Acceleration"], a: 1 },
+                    { topic: "Force", q: "A balanced force can:", options: ["Stop a moving object", "Move a stationary object", "Change the shape of an object", "Change the velocity of an object"], a: 2 },
+                    { topic: "Newton's Second Law", q: "A 5 N force acts on a mass m₁ giving 10 m/s² acceleration and on mass m₂ giving 20 m/s². If m₁ and m₂ are tied, the acceleration is:", options: ["6.67 m/s²", "15 m/s²", "30 m/s²", "5 m/s²"], a: 0 },
+                ],
+                ch3: [
+                    { topic: "Crop Types", q: "Which of the following is a Rabi crop?", options: ["Paddy", "Maize", "Soyabean", "Wheat"], a: 3 },
+                    { topic: "Crop Improvement", q: "The process of crossing two genetically dissimilar plants is called:", options: ["Rotation", "Hybridisation", "Irrigation", "Weeding"], a: 1 },
+                    { topic: "Crop Production", q: "Which of the following is a macro-nutrient for plants?", options: ["Iron", "Manganese", "Nitrogen", "Zinc"], a: 2 },
+                    { topic: "Crop Production", q: "Vermi-compost is prepared using:", options: ["Bacteria", "Fungi", "Earthworms", "Viruses"], a: 2 },
+                    { topic: "Crop Production", q: "Growing two or more crops in a definite row pattern is called:", options: ["Mixed cropping", "Crop rotation", "Intercropping", "Organic farming"], a: 2 },
+                    { topic: "Animal Husbandry", q: "Cattle raised for milk production are called:", options: ["Draught animals", "Milch animals", "Broilers", "Layers"], a: 1 },
+                    { topic: "Animal Husbandry", q: "The 'White Revolution' in India is associated with:", options: ["Crop production", "Fish production", "Milk production", "Egg production"], a: 2 },
+                    { topic: "Animal Husbandry", q: "Broilers in poultry farming are raised for:", options: ["Eggs", "Meat", "Ploughing", "Feathers"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Which of the following is a freshwater fish?", options: ["Pomphret", "Tuna", "Rohu", "Sardine"], a: 2 },
+                    { topic: "Animal Husbandry", q: "The practice of bee-keeping is also known as:", options: ["Apiculture", "Pisciculture", "Sericulture", "Mariculture"], a: 0 },
+                    { topic: "Crop Protection", q: "Which of the following is a weed?", options: ["Wheat", "Xanthium", "Rice", "Mustard"], a: 1 },
+                    { topic: "Crop Production", q: "Organic farming involves the use of:", options: ["High amounts of fertilizers", "Pesticides", "Bio-agents and organic manures", "Genetically modified seeds only"], a: 2 },
+                    { topic: "Animal Husbandry", q: "The exotic bee variety commonly used for commercial honey production is:", options: ["Apis dorsata", "Apis florae", "Apis cerana indica", "Apis mellifera"], a: 3 },
+                    { topic: "Crop Production", q: "What is the primary function of leguminous plants in crop rotation?", options: ["Pest control", "Weed control", "Nitrogen fixation", "Water retention"], a: 2 },
+                    { topic: "Animal Husbandry", q: "Mariculture refers to the culture of:", options: ["Freshwater fish", "Marine organisms in seawater", "Bees", "Silkworms"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Aseel and Leghorn are breeds of:", options: ["Cows", "Fish", "Poultry", "Goats"], a: 2 },
+                    { topic: "Animal Husbandry", q: "The main purpose of animal husbandry is to improve:", options: ["Only milk production", "The lives of wild animals", "Quantity and quality of livestock products", "Only crop yields"], a: 2 },
+                    { topic: "Crop Protection", q: "Which of these is an abiotic factor that can cause storage losses?", options: ["Insects", "Fungi", "Inappropriate moisture", "Rodents"], a: 2 },
+                    { topic: "Animal Husbandry", q: "The duration of the lactation period is important for:", options: ["Meat production", "Egg production", "Draught labour", "Milk production"], a: 3 },
+                    { topic: "Animal Husbandry", q: "Pasturage is related to:", options: ["Cattle feed", "Fish farming", "Bee-keeping", "Poultry feed"], a: 2 },
+                    { topic: "Crop Improvement", q: "Which revolution is credited with increased food-grain production in India?", options: ["White Revolution", "Blue Revolution", "Golden Revolution", "Green Revolution"], a: 3 },
+                    { topic: "Crop Production", q: "Which of these is NOT a method of irrigation?", options: ["Canals", "Wells", "River lift systems", "Weeding"], a: 3 },
+                    { topic: "Animal Husbandry", q: "The Jersey breed of cow is an example of a/an:", options: ["Indigenous breed", "Exotic breed", "Draught breed", "Local breed"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Composite fish culture increases:", options: ["Competition for food", "Fish yield", "Spread of diseases", "Cost of farming"], a: 1 },
+                    { topic: "Crop Types", q: "Which nutrient do pulses primarily provide?", options: ["Carbohydrates", "Fats", "Vitamins", "Proteins"], a: 3 },
+                    { topic: "Crop Types", q: "Which is a Kharif crop?", options: ["Gram", "Pea", "Linseed", "Paddy"], a: 3 },
+                    { topic: "Crop Production", q: "Green manure enriches the soil in:", options: ["Potassium and Calcium", "Nitrogen and Phosphorus", "Sulphur and Iron", "Only organic matter"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Layers in poultry farming are raised for:", options: ["Meat", "Eggs", "Both meat and eggs", "Breeding"], a: 1 },
+                    { topic: "Animal Husbandry", q: "The 'Blue Revolution' is associated with:", options: ["Milk production", "Fish production", "Crop production", "Oilseed production"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Roughage in animal feed is high in:", options: ["Protein", "Fat", "Fibre", "Minerals"], a: 2 },
+                    { topic: "Animal Husbandry", q: "Which of these is an indigenous cattle breed?", options: ["Jersey", "Brown Swiss", "Red Sindhi", "Holstein-Friesian"], a: 2 },
+                    { topic: "Crop Protection", q: "Herbicides are used to control:", options: ["Insects", "Fungi", "Weeds", "Rodents"], a: 2 },
+                    { topic: "Crop Improvement", q: "Photoperiod affects which process in plants?", options: ["Photosynthesis", "Respiration", "Transpiration", "Flowering"], a: 3 },
+                    { topic: "Animal Husbandry", q: "A bottom feeder fish in composite culture is:", options: ["Catla", "Rohu", "Grass Carp", "Mrigal"], a: 3 },
+                    { topic: "Crop Protection", q: "Fumigation is a method used for:", options: ["Irrigation", "Weed control", "Disease control", "Pest control in storage"], a: 3 },
+                    { topic: "Crop Production", q: "Growing wheat and gram together in the same field is an example of:", options: ["Crop rotation", "Mixed cropping", "Intercropping", "Mono-cropping"], a: 1 },
+                    { topic: "Crop Protection", q: "The process of removing weeds from a field is called:", options: ["Sowing", "Weeding", "Harvesting", "Tilling"], a: 1 },
+                    { topic: "Crop Improvement", q: "Which factor is NOT a focus for crop variety improvement?", options: ["Higher yield", "Biotic resistance", "Change in color", "Wider adaptability"], a: 2 },
+                    { topic: "Crop Types", q: "Which of the following is an oil seed crop?", options: ["Gram", "Lentil", "Sunflower", "Berseem"], a: 2 },
+                    { topic: "Crop Improvement", q: "Dwarfness is a desirable characteristic for which type of crop?", options: ["Fodder crops", "Cereal crops", "Fruit trees", "Vegetable crops"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Which vitamin level is kept high in broiler feed?", options: ["Vitamin C and D", "Vitamin B and E", "Vitamin A and K", "Vitamin B12"], a: 2 },
+                    { topic: "Animal Husbandry", q: "The scientific name for the Indian cow is:", options: ["Bos bubalis", "Bos indicus", "Gallus gallus", "Apis mellifera"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Which of the following is a viral disease in cattle?", options: ["Tuberculosis", "Anthrax", "Foot and mouth disease", "Ringworm"], a: 2 },
+                    { topic: "Crop Types", q: "What is the primary source of carbohydrates for humans?", options: ["Pulses", "Cereals", "Oil seeds", "Vegetables"], a: 1 },
+                    { topic: "Animal Husbandry", q: "Capture fishing is done in:", options: ["Ponds only", "Natural water bodies", "Tanks only", "Controlled environments"], a: 1 },
+                    { topic: "Animal Husbandry", q: "The rearing of fish on a large scale is called:", options: ["Horticulture", "Apiculture", "Pisciculture", "Agriculture"], a: 2 },
+                    { topic: "Animal Husbandry", q: "Which animal product is richest in protein?", options: ["Milk (Cow)", "Egg", "Meat", "Fish"], a: 2 },
+                    { topic: "Animal Husbandry", q: "A major problem in fish farming is:", options: ["Lack of water", "Lack of good quality seed", "High competition", "Lack of market"], a: 1 },
+                    { topic: "Animal Husbandry", q: "What do we get from beehives in addition to honey?", options: ["Silk", "Wax", "Lac", "Nectar"], a: 1 },
+                    { topic: "Crop Production", q: "Which cropping pattern prevents soil erosion?", options: ["Monoculture", "Intercropping", "Fallow land", "Tillage"], a: 1 }
+                ]
+            }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            currentUser: null,
+            currentChapter: null,
+            currentQuizQuestion: 0,
+            quizScore: 0,
+            wrongAnswers: [],
+        };
+
+        // --- DOM ELEMENTS ---
+        const studentListDiv = document.getElementById('student-list');
+        const chapterListDiv = document.getElementById('chapter-list');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const tutorForm = document.getElementById('tutor-form');
+        const tutorInput = document.getElementById('tutor-input');
+        const tutorChatBox = document.getElementById('tutor-chat-box');
+
+        // --- GEMINI API Configuration ---
+        const apiKey = ""; // Keep this empty. It's handled by the environment.
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        // --- FUNCTIONS ---
+        
+        /**
+         * Generic function to call the Gemini API with exponential backoff.
+         */
+        async function callGeminiApi(payload, maxRetries = 3) {
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        console.warn("API response was empty or blocked.", result);
+                        return "I'm sorry, I can't provide a response to that. Could you ask another question?";
+                    }
+                } catch (error) {
+                    console.error('API Call Error:', error);
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        return "I'm having trouble connecting right now. Please try again in a moment.";
+                    }
+                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                    await new Promise(res => setTimeout(res, delay));
+                }
+            }
+        }
+
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            window.scrollTo(0, 0);
+        }
+
+        function populateStudents() {
+            students.forEach(student => {
+                const studentButton = document.createElement('button');
+                studentButton.className = "bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 font-semibold py-4 px-2 rounded-lg transition-all duration-200 transform hover:scale-105";
+                studentButton.textContent = student;
+                studentButton.onclick = () => login(student);
+                studentListDiv.appendChild(studentButton);
+            });
+        }
+        
+        function login(name) {
+            state.currentUser = name;
+            welcomeMessage.textContent = `Hello, ${name}!`;
+            showPage('home-page');
+        }
+
+        function logout() {
+            state.currentUser = null;
+            showPage('login-page');
+        }
+
+        function populateChapters() {
+            chapterListDiv.innerHTML = ''; // Clear existing chapters to prevent duplication
+            data.chapters.forEach(chapter => {
+                const chapterCard = document.createElement('div');
+                chapterCard.className = "bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col";
+                chapterCard.onclick = () => loadChapter(chapter.id);
+                chapterCard.innerHTML = `
+                    <div class="flex-grow">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2">${chapter.title}</h2>
+                        <p class="text-slate-600 mb-4">${chapter.description}</p>
+                    </div>
+                    <button class="w-full mt-auto text-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        Click on me
+                    </button>
+                `;
+                chapterListDiv.appendChild(chapterCard);
+            });
+        }
+        
+        function loadChapter(chapterId) {
+            state.currentChapter = chapterId;
+            const chapter = data.chapters.find(c => c.id === chapterId);
+            document.getElementById('chapter-title').textContent = chapter.title;
+            showPage('chapter-page');
+        }
+
+        function showContent(contentType) {
+            const chapter = data.chapters.find(c => c.id === state.currentChapter);
+            if (contentType === 'qna') {
+                document.getElementById('qna-title').textContent = `${chapter.title} - Q&A`;
+                populateQnA();
+                showPage('qna-page');
+            } else if (contentType === 'quiz') {
+                document.getElementById('quiz-title').textContent = `${chapter.title} - Quiz`;
+                startQuiz();
+                showPage('quiz-page');
+            } else if (contentType === 'ai_tutor') {
+                document.getElementById('ai-tutor-title').textContent = `✨ AI Tutor - Vidya (${chapter.title})`;
+                setupAiTutor();
+                showPage('ai-tutor-page');
+            }
+        }
+
+        function populateQnA() {
+            const qnaContentDiv = document.getElementById('qna-content');
+            qnaContentDiv.innerHTML = '';
+            const questions = data.qna[state.currentChapter];
+            
+            questions.forEach(item => {
+                const qnaItem = document.createElement('div');
+                qnaItem.className = 'bg-white p-5 rounded-xl shadow-md';
+                qnaItem.innerHTML = `
+                    <details>
+                        <summary class="font-semibold text-lg cursor-pointer list-inside">
+                           <span class="text-xs font-bold uppercase text-blue-500 bg-blue-100 px-2 py-1 rounded-full mr-3">${item.level}</span> ${item.q}
+                        </summary>
+                        <div class="mt-4 text-slate-700 pl-4 border-l-2 border-blue-200">
+                            <p>${item.a}</p>
+                            <button onclick="explainSimply(this)" class="mt-3 text-sm bg-violet-100 text-violet-700 font-semibold py-1 px-3 rounded-full hover:bg-violet-200 transition-colors">✨ Explain Simply</button>
+                            <div class="explanation-container mt-2 text-sm"></div>
+                        </div>
+                    </details>
+                `;
+                qnaContentDiv.appendChild(qnaItem);
+            });
+        }
+        
+        function startQuiz() {
+            state.currentQuizQuestion = 0;
+            state.quizScore = 0;
+            state.wrongAnswers = [];
+            document.getElementById('quiz-content').style.display = 'block';
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('study-plan-container').classList.add('hidden');
+            document.getElementById('study-plan-container').innerHTML = '';
+            displayQuizQuestion();
+        }
+
+        function displayQuizQuestion() {
+            const quizData = data.quiz[state.currentChapter];
+            if (state.currentQuizQuestion >= quizData.length) {
+                showQuizResults();
+                return;
+            }
+
+            const questionData = quizData[state.currentQuizQuestion];
+            const quizContentDiv = document.getElementById('quiz-content');
+
+            const progress = ((state.currentQuizQuestion + 1) / quizData.length) * 100;
+            document.getElementById('quiz-progress').textContent = `${state.currentQuizQuestion + 1} / ${quizData.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${progress}%`;
+
+            let optionsHtml = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">';
+            questionData.options.forEach((option, index) => {
+                optionsHtml += `<button class="quiz-option w-full text-left p-4 border-2 border-slate-200 rounded-lg transition-all duration-200" onclick="checkAnswer(this, ${index}, ${questionData.a})">${option}</button>`;
+            });
+            optionsHtml += '</div>';
+
+            quizContentDiv.innerHTML = `
+                <p class="text-xl font-semibold mb-2">${state.currentQuizQuestion + 1}. ${questionData.q}</p>
+                ${optionsHtml}
+                <div class="mt-8 flex justify-between items-center">
+                    <button onclick="skipQuestion()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors">Skip</button>
+                    <p id="feedback-message" class="font-medium"></p>
+                    <button id="next-btn" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors invisible">Next</button>
+                </div>
+            `;
+        }
+
+        function checkAnswer(buttonElement, selectedIndex, correctIndex) {
+            const options = buttonElement.parentElement.querySelectorAll('.quiz-option');
+            const feedbackMsg = document.getElementById('feedback-message');
+            options.forEach(option => option.disabled = true);
+
+            if (selectedIndex === correctIndex) {
+                state.quizScore++;
+                options[selectedIndex].classList.add('correct-answer');
+                feedbackMsg.textContent = 'Correct!';
+                feedbackMsg.className = 'font-medium text-green-600';
+            } else {
+                options[selectedIndex].classList.add('wrong-answer');
+                options[correctIndex].classList.add('correct-answer');
+                feedbackMsg.textContent = 'Incorrect!';
+                feedbackMsg.className = 'font-medium text-red-600';
+                const wrongQuestion = data.quiz[state.currentChapter][state.currentQuizQuestion];
+                state.wrongAnswers.push(wrongQuestion.topic);
+            }
+            
+            document.getElementById('next-btn').classList.remove('invisible');
+        }
+
+        function nextQuestion() {
+            state.currentQuizQuestion++;
+            displayQuizQuestion();
+        }
+        
+        function skipQuestion() {
+            nextQuestion();
+        }
+
+        function showQuizResults() {
+            const quizData = data.quiz[state.currentChapter];
+            const score = state.quizScore;
+            const total = quizData.length;
+            const percentage = (score / total) * 100;
+            const feedbackDiv = document.getElementById('score-feedback');
+            
+            let feedbackText = '';
+            if (percentage >= 90) { feedbackText = "Excellent work! You have mastered this chapter."; } 
+            else if (percentage >= 70) { feedbackText = "Great job! You have a strong understanding of the concepts."; } 
+            else if (percentage >= 50) { feedbackText = "Good effort. A little more review would be beneficial."; } 
+            else { feedbackText = "Keep trying! Revisit the Q&A section to strengthen your knowledge."; }
+
+            feedbackDiv.textContent = feedbackText;
+            document.getElementById('quiz-content').style.display = 'none';
+            document.getElementById('quiz-results').classList.remove('hidden');
+            document.getElementById('quiz-score').textContent = `${score} / ${total}`;
+        }
+        
+        // --- Gemini API Feature Functions ---
+
+        async function explainSimply(buttonElement) {
+            const explanationContainer = buttonElement.nextElementSibling;
+            const originalAnswer = buttonElement.previousElementSibling.innerHTML;
+            
+            explanationContainer.innerHTML = '<div class="flex items-center gap-2"><div class="loader"></div><span>Simplifying...</span></div>';
+            
+            const systemPrompt = "You are an expert at simplifying complex scientific topics.";
+            const userQuery = `Explain the following concept as if you were talking to a 10-year-old. Use simple analogies but remain scientifically accurate. Concept: ${originalAnswer}`;
+
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            const simplifiedText = await callGeminiApi(payload);
+
+            explanationContainer.innerHTML = `<div class="p-3 bg-violet-50 border border-violet-200 rounded-md">${simplifiedText.replace(/\n/g, '<br>')}</div>`;
+        }
+
+        async function generateStudyPlan() {
+            const planContainer = document.getElementById('study-plan-container');
+            const planButton = document.getElementById('study-plan-btn');
+            planButton.disabled = true;
+            planContainer.classList.remove('hidden');
+            planContainer.innerHTML = '<div class="flex items-center justify-center gap-2"><div class="loader"></div><span>✨ Generating your personal study plan...</span></div>';
+
+            const uniqueWrongTopics = [...new Set(state.wrongAnswers)];
+
+            if (uniqueWrongTopics.length === 0) {
+                 planContainer.innerHTML = '<strong>Congratulations!</strong> You answered all questions correctly. No study plan needed!';
+                 planButton.disabled = false;
+                 return;
+            }
+
+            const chapter = data.chapters.find(c => c.id === state.currentChapter);
+            const score = state.quizScore;
+            const total = data.quiz[state.currentChapter].length;
+
+            const systemPrompt = "You are an expert academic coach. Your task is to create a concise, encouraging, and actionable study plan for a 9th-grade student based on the topics they found challenging in a science quiz. The plan should have 3-4 clear steps. Use markdown for formatting (e.g., **bold** for titles, * for list items).";
+            const userQuery = `The student scored ${score}/${total} on a quiz about "${chapter.title}". They answered questions incorrectly on the following topics: ${uniqueWrongTopics.join(', ')}. Please generate a personalized study plan to help them improve.`;
+            
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            let planText = await callGeminiApi(payload);
+
+            planText = planText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\* (.*?)(?=\n\*|\n$|$)/g, '<li class="ml-5 p-1 list-disc">$1</li>')
+                .replace(/\n/g, '<br>');
+
+            planContainer.innerHTML = `<ul>${planText}</ul>`;
+            planButton.disabled = false;
+        }
+
+        function setupAiTutor() {
+            tutorChatBox.innerHTML = '<div class="text-slate-600 p-3 bg-slate-100 rounded-lg"><strong>Vidya (AI Tutor):</strong> Hello! I\'m Vidya. Ask me anything about this chapter.</div>';
+        }
+        
+        async function handleTutorSubmit(event) {
+            event.preventDefault();
+            const userInput = tutorInput.value.trim();
+            if (!userInput) return;
+
+            tutorChatBox.innerHTML += `<div class="text-right"><span class="inline-block text-white p-3 bg-blue-500 rounded-lg">${userInput}</span></div>`;
+            tutorInput.value = '';
+            tutorChatBox.scrollTop = tutorChatBox.scrollHeight;
+
+            const loadingId = `loading-${Date.now()}`;
+            tutorChatBox.innerHTML += `<div id="${loadingId}" class="flex items-center gap-2 text-slate-600"><div class="loader"></div><span>Vidya is thinking...</span></div>`;
+            tutorChatBox.scrollTop = tutorChatBox.scrollHeight;
+
+            const chapterSummary = data.chapterSummaries[state.currentChapter];
+            const systemPrompt = "You are a friendly and encouraging science tutor for a 9th-grade student in India. Your name is 'Vidya'. Explain concepts clearly, concisely, and accurately based on the provided chapter context. When asked a question, first provide a direct answer, then ask a follow-up question to check for understanding. Do not answer questions outside the scope of the provided chapter summary.";
+            const userQuery = `Chapter Context: ${chapterSummary}. Student's question: "${userInput}"`;
+
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+            let responseText = await callGeminiApi(payload);
+            responseText = responseText.replace(/\n/g, '<br>'); 
+
+            const loadingElement = document.getElementById(loadingId);
+            loadingElement.outerHTML = `<div class="text-slate-600 p-3 bg-slate-100 rounded-lg"><strong>Vidya (AI Tutor):</strong> ${responseText}</div>`;
+            tutorChatBox.scrollTop = tutorChatBox.scrollHeight;
+        }
+        
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStudents();
+            populateChapters();
+            tutorForm.addEventListener('submit', handleTutorSubmit);
+        });
+
+    </script>
+</body>
+</html>
+
+

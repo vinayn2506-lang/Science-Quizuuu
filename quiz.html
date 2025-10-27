@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Whiz Quiz</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for a premium feel */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-container {
+            /* Frosted glass effect */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease-in-out;
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Custom classes to be added by JS */
+        .correct {
+            background-color: #22c55e !important; /* green-500 */
+            border-color: #16a34a !important; /* green-600 */
+            color: white !important;
+            transform: scale(1.02);
+        }
+        .wrong {
+            background-color: #ef4444 !important; /* red-500 */
+            border-color: #dc2626 !important; /* red-600 */
+            color: white !important;
+        }
+        .disabled {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Quiz Card -->
+    <div id="quiz-container" class="quiz-container rounded-2xl shadow-2xl p-6 sm:p-10 max-w-2xl w-full">
+
+        <!-- Header -->
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-purple-800 mb-2">Math Whiz Quiz</h1>
+        <p class="text-center text-gray-600 mb-4">Test your knowledge from the basics!</p>
+        
+        <!-- Progress Info -->
+        <div class="flex justify-between items-center mb-4 text-lg font-semibold">
+            <span id="progress-text" class="text-gray-700">Question 1 of 12</span>
+            <span id="score-text" class="text-purple-700">Score: 0</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+            <div id="progress-bar" class="bg-green-500 h-2.5 rounded-full transition-all duration-500" style="width: 8%"></div>
+        </div>
+
+        <!-- Main Content Area (Question/Results) -->
+        <div id="main-content">
+            <!-- Question Text -->
+            <h2 id="question-text" class="text-2xl font-semibold text-gray-900 my-6 min-h-[5rem] sm:min-h-[6rem]">
+                Loading question...
+            </h2>
+
+            <!-- Options Grid -->
+            <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button class="option-btn bg-white border-2 border-gray-300 rounded-lg p-4 text-left w-full text-lg hover:bg-purple-100 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500" data-option="A">Option A</button>
+                <button class="option-btn bg-white border-2 border-gray-300 rounded-lg p-4 text-left w-full text-lg hover:bg-purple-100 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500" data-option="B">Option B</button>
+                <button class="option-btn bg-white border-2 border-gray-300 rounded-lg p-4 text-left w-full text-lg hover:bg-purple-100 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500" data-option="C">Option C</button>
+                <button class="option-btn bg-white border-2 border-gray-300 rounded-lg p-4 text-left w-full text-lg hover:bg-purple-100 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500" data-option="D">Option D</button>
+            </div>
+
+            <!-- Feedback Message -->
+            <div id="feedback-message" class="text-xl font-semibold text-center mt-5" style="display: none;">
+                <!-- Feedback appears here -->
+            </div>
+
+            <!-- Next Button -->
+            <button id="next-btn" class="bg-purple-600 text-white rounded-lg px-8 py-3 text-lg font-semibold w-full mt-6 hover:bg-purple-700 transition-all duration-200" style="display: none;">
+                Next Question
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. QUIZ DATA ---
+            // Questions based on the PDF and custom-made ones
+            const quizData = [
+                {
+                    question: "What do we call fractions that have the *same* denominator, like 2/7 and 5/7?",
+                    options: {
+                        A: "Unlike fractions",
+                        B: "Like fractions",
+                        C: "Proper fractions",
+                        D: "Unit fractions"
+                    },
+                    answer: "B"
+                },
+                {
+                    question: "In the number 23.7, what is the '7' called?",
+                    options: {
+                        A: "The whole number part",
+                        B: "The decimal point",
+                        C: "The decimal part",
+                        D: "The numerator"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "How many centimetres (cm) are in 1 metre (m)?",
+                    options: {
+                        A: "10",
+                        B: "100",
+                        C: "1000",
+                        D: "1"
+                    },
+                    answer: "B"
+                },
+                {
+                    question: "I am a fraction. My numerator is *greater* than my denominator. What must be true about my value?",
+                    options: {
+                        A: "My value is smaller than 1",
+                        B: "My value is exactly 1",
+                        C: "My value is greater than or equal to 1",
+                        D: "I am a unit fraction"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "Your water bottle holds 1 litre. You drink half of it. How many millilitres (ml) are left?",
+                    options: {
+                        A: "1000 ml",
+                        B: "100 ml",
+                        C: "500 ml",
+                        D: "750 ml"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "How many 'hundredths' do you need to make one 'tenth'?",
+                    options: {
+                        A: "1",
+                        B: "100",
+                        C: "10",
+                        D: "1000"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "According to the file, how do you express an improper fraction as a mixed fraction after dividing?",
+                    options: {
+                        A: "Divisor (Remainder / Quotient)",
+                        B: "Quotient (Remainder / Divisor)",
+                        C: "Remainder (Quotient / Divisor)",
+                        D: "Quotient (Divisor / Remainder)"
+                    },
+                    answer: "B"
+                },
+                {
+                    question: "A recipe asks for 2000 grams (g) of flour. How many kilograms (kg) is this?",
+                    options: {
+                        A: "200 kg",
+                        B: "20 kg",
+                        C: "2 kg",
+                        D: "0.2 kg"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "Which of these fractions is *NOT* equivalent to 1/2?",
+                    options: {
+                        A: "2/4",
+                        B: "5/10",
+                        C: "50/100",
+                        D: "2/1"
+                    },
+                    answer: "D"
+                },
+                {
+                    question: "What is the decimal form of the fraction 1/100 (one-hundredth)?",
+                    options: {
+                        A: "0.1",
+                        B: "0.01",
+                        C: "1.00",
+                        D: "100.0"
+                    },
+                    answer: "B"
+                },
+                {
+                    question: "What is the *best* unit to measure the distance between two cities?",
+                    options: {
+                        A: "Centimetres (cm)",
+                        B: "Metres (m)",
+                        C: "Kilometres (km)",
+                        D: "Millilitres (ml)"
+                    },
+                    answer: "C"
+                },
+                {
+                    question: "If you have two *like* fractions, 3/5 and 4/5, which one is greater?",
+                    options: {
+                        A: "3/5",
+                        B: "4/5",
+                        C: "They are equal",
+                        D: "You can't tell"
+                    },
+                    answer: "B"
+                }
+            ];
+            
+            // Messages for correct answers
+            const appreciationMessages = [
+                "Awesome!",
+                "Great job!",
+                "You're a star!",
+                "Brilliant!",
+                "Correct!",
+                "Super!",
+                "Well done!"
+            ];
+
+            // --- 2. STATE VARIABLES ---
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let questionsAnswered = false;
+
+            // --- 3. DOM ELEMENTS ---
+            const progressText = document.getElementById('progress-text');
+            const scoreText = document.getElementById('score-text');
+            const progressBar = document.getElementById('progress-bar');
+            const mainContent = document.getElementById('main-content');
+            const questionText = document.getElementById('question-text');
+            const optionsGrid = document.getElementById('options-grid');
+            const optionButtons = document.querySelectorAll('.option-btn');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const nextBtn = document.getElementById('next-btn');
+
+            // --- 4. FUNCTIONS ---
+
+            /**
+             * Loads the current question and options into the UI
+             */
+            function loadQuestion() {
+                questionsAnswered = false;
+                const currentQuestion = quizData[currentQuestionIndex];
+
+                // Reset UI
+                feedbackMessage.style.display = 'none';
+                nextBtn.style.display = 'none';
+
+                // Set question
+                questionText.innerText = currentQuestion.question;
+                
+                // Set progress
+                progressText.innerText = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+                scoreText.innerText = `Score: ${score}`;
+                progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+                // Set options
+                optionButtons.forEach(btn => {
+                    const option = btn.getAttribute('data-option');
+                    btn.innerText = `${option}: ${currentQuestion.options[option]}`;
+                    
+                    // Reset styles
+                    btn.classList.remove('correct', 'wrong', 'disabled');
+                });
+
+                // Update next button text for the last question
+                if (currentQuestionIndex === quizData.length - 1) {
+                    nextBtn.innerText = 'Finish Quiz';
+                } else {
+                    nextBtn.innerText = 'Next Question';
+                }
+            }
+
+            /**
+             * Handles the user's answer selection
+             */
+            function selectAnswer(selectedOption, btnElement) {
+                if (questionsAnswered) return; // Don't allow multiple answers
+                questionsAnswered = true;
+
+                const correctAnswer = quizData[currentQuestionIndex].answer;
+
+                // Disable all buttons
+                optionButtons.forEach(btn => btn.classList.add('disabled'));
+
+                if (selectedOption === correctAnswer) {
+                    // --- Correct Answer ---
+                    score++;
+                    btnElement.classList.add('correct');
+                    
+                    // Show random appreciation message
+                    const randomMsg = appreciationMessages[Math.floor(Math.random() * appreciationMessages.length)];
+                    feedbackMessage.innerText = randomMsg;
+                    feedbackMessage.style.color = '#16a34a'; // green-600
+                } else {
+                    // --- Wrong Answer ---
+                    btnElement.classList.add('wrong');
+                    
+                    // Show the correct answer
+                    const correctBtn = document.querySelector(`.option-btn[data-option="${correctAnswer}"]`);
+                    correctBtn.classList.add('correct');
+                    
+                    feedbackMessage.innerText = `Oops! The correct answer was ${correctAnswer}.`;
+                    feedbackMessage.style.color = '#dc2626'; // red-600
+                }
+
+                // Show feedback and next button
+                feedbackMessage.style.display = 'block';
+                nextBtn.style.display = 'block';
+                scoreText.innerText = `Score: ${score}`; // Update score display
+            }
+
+            /**
+             * Moves to the next question or shows final results
+             */
+            function nextQuestion() {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuestion();
+                } else {
+                    showFinalResults();
+                }
+            }
+
+            /**
+             * Displays the final score and a restart button
+             */
+            function showFinalResults() {
+                // Clear the main content area
+                mainContent.innerHTML = '';
+                
+                // Calculate percentage
+                const percentage = Math.round((score / quizData.length) * 100);
+                let resultMessage = '';
+                
+                if (percentage >= 80) {
+                    resultMessage = "Wow, you're a Math Whiz! 🤩";
+                } else if (percentage >= 50) {
+                    resultMessage = "Great job! You know your stuff! 👍";
+                } else {
+                    resultMessage = "Good try! Keep practicing! 😊";
+                }
+
+                // Show final score
+                mainContent.innerHTML = `
+                    <h2 class="text-3xl font-bold text-center text-purple-800 mb-4">${resultMessage}</h2>
+                    <p class="text-2xl text-center text-gray-700 mb-8">
+                        You scored ${score} out of ${quizData.length} (${percentage}%)
+                    </p>
+                    <button id="restart-btn" class="bg-purple-600 text-white rounded-lg px-8 py-3 text-lg font-semibold w-full hover:bg-purple-700 transition-all duration-200">
+                        Play Again
+                    </button>
+                `;
+
+                // Add event listener to the new restart button
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    // Reload the page to restart the quiz
+                    window.location.reload();
+                });
+                
+                // Update progress bar to full
+                progressBar.style.width = '100%';
+            }
+
+
+            // --- 5. EVENT LISTENERS ---
+            
+            // Add click listeners to option buttons
+            optionButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const selectedOption = btn.getAttribute('data-option');
+                    selectAnswer(selectedOption, btn);
+                });
+            });
+
+            // Add click listener to next button
+            nextBtn.addEventListener('click', nextQuestion);
+
+            // --- 6. INITIALIZE QUIZ ---
+            loadQuestion();
+        });
+    </script>
+</body>
+</html>

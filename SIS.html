@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Journey of a Star</title>
+    <!-- 1. Tailwind CSS for styling the "premium interface" -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. three.js for 3D animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- 3. Tone.js for generative audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    
+    <style>
+        /* Use Inter font and ensure full-screen canvas */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #000;
+            color: white;
+        }
+        
+        /* Canvas should be fixed and behind all UI */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        /* Main UI container */
+        #ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none; /* Allow clicking through to canvas if needed, but buttons will override */
+        }
+
+        /* Controls styling */
+        #controls {
+            pointer-events: auto; /* Enable clicks on buttons */
+            padding: 1.5rem; /* 24px */
+            display: flex;
+            gap: 0.5rem; /* 8px */
+        }
+        
+        /* Common button style */
+        .control-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem; /* 8px 16px */
+            border-radius: 0.5rem; /* 8px */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+        }
+        
+        .control-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .control-btn svg {
+            width: 1rem; /* 16px */
+            height: 1rem; /* 16px */
+        }
+
+        /* Text overlay container */
+        #text-overlay-container {
+            width: 100%;
+            padding: 2rem; /* 32px */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 5vh; /* Position 5% from the bottom */
+        }
+        
+        /* Scene Title */
+        #scene-title {
+            font-size: 1.125rem; /* 18px */
+            line-height: 1.75rem; /* 28px */
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        
+        /* Main Text Overlay */
+        #text-overlay {
+            font-size: 1.875rem; /* 30px */
+            line-height: 2.25rem; /* 36px */
+            font-weight: 300;
+            margin-top: 0.5rem; /* 8px */
+            max-width: 800px;
+            text-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        
+        /* Fade-in animation for text */
+        .fade-in {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- UI Elements -->
+    <div id="ui-container">
+        <!-- Top Controls: Play/Pause, Restart -->
+        <div id="controls">
+            <button id="play-pause-btn" class="control-btn">
+                <!-- Play Icon -->
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                </svg>
+                <!-- Pause Icon -->
+                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="hidden">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h1a1 1 0 001-1V8a1 1 0 00-1-1H8zm3 0a1 1 0 00-1 1v4a1 1 0 001 1h1a1 1 0 001-1V8a1 1 0 00-1-1h-1z" clip-rule="evenodd" />
+                </svg>
+                <span id="play-pause-text">Play</span>
+            </button>
+            <button id="restart-btn" class="control-btn">
+                <!-- Restart Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101A7.002 7.002 0 0110 3c3.037 0 5.59 2.166 6.544 5.064a.75.75 0 01-1.488.272A5.502 5.502 0 0010 4.5 5.502 5.502 0 004.5 10c0 .984.256 1.907.7 2.701A.75.75 0 014.45 13.5a7.002 7.002 0 01-1.35-4.436V6a1 1 0 01-1-1V3a1 1 0 011-1zm10.707 9.293a.75.75 0 010 1.06l-2.5 2.5a.75.75 0 01-1.06 0l-2.5-2.5a.75.75 0 111.06-1.06L9.25 12.69l.47-.47a.75.75 0 011.06 0l.47.47 1.47-1.47a.75.75 0 011.06 0zM10 17a7.002 7.002 0 006.35-4.436V14a1 1 0 001 1v2a1 1 0 001 1h-1a1 1 0 00-1-1v-2.101A7.002 7.002 0 0010 17c-3.037 0-5.59-2.166-6.544-5.064a.75.75 0 00-1.488.272A5.502 5.502 0 0110 15.5a5.502 5.502 0 015.5-5.5c0-.984-.256-1.907-.7-2.701A.75.75 0 0015.55 6.5a7.002 7.002 0 001.35 4.436V13a1 1 0 00-1 1v1z" clip-rule="evenodd" />
+                </svg>
+                <span>Restart</span>
+            </button>
+        </div>
+        
+        <!-- Bottom Text Overlays -->
+        <div id="text-overlay-container">
+            <h2 id="scene-title"></h2>
+            <p id="text-overlay"></p>
+        </div>
+    </div>
+    
+    <!-- This is where the 3D animation will be rendered -->
+    <!-- Canvas is created by three.js script -->
+
+    <script>
+        // --- GLOBAL VARIABLES ---
+        
+        // three.js components
+        let scene, camera, renderer, clock, star, starLight;
+        let nebulaParticles, stardust, planetSystem, galaxyCluster, daughterStars, constellation;
+        
+        // Audio components
+        let synth, musicLoop;
+        let musicPlaying = false;
+        
+        // Animation State
+        let currentSceneIndex = 0;
+        let animationState = 'paused'; // 'playing', 'paused'
+        let sceneStartTime = 0;
+
+        // DOM Elements
+        const textOverlay = document.getElementById('text-overlay');
+        const sceneTitle = document.getElementById('scene-title');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playPauseText = document.getElementById('play-pause-text');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // --- SCENE DEFINITIONS ---
+        // This array drives the entire animation.
+        // Based on the prompt: 7 scenes.
+        const scenes = [
+            {
+                // Scene 1: The Spark
+                duration: 5, // 5 seconds
+                title: "Scene 1: The Spark",
+                text: "In a quiet corner of the universe, a new star is born.",
+                setup: () => {
+                    // Create the star. It starts tiny.
+                    const starTexture = createGlowTexture();
+                    const starMaterial = new THREE.SpriteMaterial({
+                        map: starTexture,
+                        blending: THREE.AdditiveBlending,
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    star = new THREE.Sprite(starMaterial);
+                    star.scale.set(0.1, 0.1, 0.1);
+                    scene.add(star);
+                    
+                    // Add a point light to the star's position
+                    starLight = new THREE.PointLight(0xffffff, 2, 100);
+                    star.add(starLight);
+                    
+                    // Camera position
+                    camera.position.set(0, 0, 15);
+                    camera.lookAt(0, 0, 0);
+                },
+                action: (progress) => {
+                    // Grow the star from 0.1 to 1.0
+                    const scale = 0.1 + progress * 0.9;
+                    star.scale.set(scale, scale, scale);
+                    // Camera slowly zooms in
+                    camera.position.z = 15 - progress * 5;
+                }
+            },
+            {
+                // Scene 2: Gathering Light (Education)
+                duration: 6,
+                title: "Scene 2: Gathering Light",
+                text: "He gathers knowledge, burning brighter with every particle.",
+                setup: () => {
+                    // Create stardust particle system
+                    stardust = createParticleSystem(500, new THREE.Color(0xffeeb3), 20); // Golden dust
+                    scene.add(stardust);
+                },
+                action: (progress) => {
+                    // Swirl stardust and move it towards the star
+                    const positions = stardust.geometry.attributes.position.array;
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const x = positions[i];
+                        const y = positions[i+1];
+                        const z = positions[i+2];
+                        const vec = new THREE.Vector3(x, y, z);
+                        // Move particles towards the center (the star)
+                        vec.lerp(star.position, 0.005 + progress * 0.01);
+                        positions[i] = vec.x;
+                        positions[i+1] = vec.y;
+                        positions[i+2] = vec.z;
+                    }
+                    stardust.geometry.attributes.position.needsUpdate = true;
+                    
+                    // Star grows slightly
+                    const scale = 1.0 + progress * 0.5;
+                    star.scale.set(scale, scale, scale);
+                    starLight.intensity = 2 + progress;
+                }
+            },
+            {
+                // Scene 3: The First System (First Venture)
+                duration: 6,
+                title: "Scene 3: The First System",
+                text: "He creates his first world.",
+                setup: () => {
+                    // Clean up stardust
+                    scene.remove(stardust);
+                    stardust.geometry.dispose();
+                    stardust.material.dispose();
+                    
+                    // Create a planetary system
+                    planetSystem = new THREE.Group();
+                    const planetGeo = new THREE.SphereGeometry(0.15, 16, 16);
+                    const planetMat = new THREE.MeshPhongMaterial({ color: 0x4da6ff });
+                    
+                    for (let i = 0; i < 3; i++) {
+                        const planet = new THREE.Mesh(planetGeo, planetMat);
+                        const pivot = new THREE.Object3D(); // Pivot for orbit
+                        pivot.add(planet);
+                        planetSystem.add(pivot);
+                        
+                        const distance = 1.5 + i * 0.8;
+                        planet.position.set(distance, 0, 0);
+                        pivot.rotation.y = Math.random() * Math.PI * 2;
+                        pivot.userData.orbitSpeed = 0.5 + Math.random() * 0.5;
+                    }
+                    star.add(planetSystem); // Add planets as children of the star
+                },
+                action: (progress) => {
+                    // Orbit the planets
+                    planetSystem.children.forEach(pivot => {
+                        pivot.rotation.y += pivot.userData.orbitSpeed * 0.01;
+                    });
+                    
+                    // Star grows
+                    const scale = 1.5 + progress * 0.5;
+                    star.scale.set(scale, scale, scale);
+                    
+                    // Camera pulls back to show the system
+                    camera.position.z = 10 + progress * 5;
+                }
+            },
+            {
+                // Scene 4: Journey to a New Galaxy (Career Abroad)
+                duration: 7,
+                title: "Scene 4: Journey to a New Galaxy",
+                text: "He ventures far, shining brightly among giants.",
+                setup: () => {
+                    // Remove old planets
+                    star.remove(planetSystem);
+                    
+                    // Create a cluster of "giant" stars
+                    galaxyCluster = createParticleSystem(100, new THREE.Color(0xffffff), 50, 0.5); // 100 big stars
+                    galaxyCluster.position.z = -30;
+                    scene.add(galaxyCluster);
+                },
+                action: (progress) => {
+                    // Move the star and camera "forward"
+                    const travelSpeed = 40 * (progress - (progress * progress * 0.5)); // Ease-in-out
+                    star.position.z = -travelSpeed;
+                    camera.position.z = 15 - travelSpeed;
+                    
+                    // When close, star grows and shines brighter
+                    if (progress > 0.5) {
+                        const scale = 2.0 + (progress - 0.5) * 2; // Grow from 2.0 to 3.0
+                        star.scale.set(scale, scale, scale);
+                        starLight.intensity = 3 + (progress - 0.5) * 4; // Intensity from 3 to 5
+                    }
+                }
+            },
+            {
+                // Scene 5: The Binary Stars (Family)
+                duration: 6,
+                title: "Scene 5: The Binary Stars",
+                text: "His light creates new light.",
+                setup: () => {
+                    // Remove galaxy cluster
+                    scene.remove(galaxyCluster);
+                    galaxyCluster.geometry.dispose();
+                    galaxyCluster.material.dispose();
+                    
+                    // Create two "daughter" stars
+                    daughterStars = new THREE.Group();
+                    const starTexture = createGlowTexture();
+                    
+                    for (let i = 0; i < 2; i++) {
+                        const material = new THREE.SpriteMaterial({
+                            map: starTexture,
+                            blending: THREE.AdditiveBlending,
+                            color: 0xffdAB9, // Peach color
+                            transparent: true,
+                            opacity: 0.8,
+                            rotation: Math.random() * Math.PI
+                        });
+                        const sprite = new THREE.Sprite(material);
+                        sprite.scale.set(0.01, 0.01, 0.01); // Start tiny
+                        
+                        const pivot = new THREE.Object3D();
+                        pivot.add(sprite);
+                        pivot.userData.orbitSpeed = 0.8 + i * 0.2;
+                        pivot.userData.distance = 2.5 + i * 0.5;
+                        sprite.position.set(pivot.userData.distance, 0, 0);
+                        daughterStars.add(pivot);
+                    }
+                    star.add(daughterStars); // Add to the main star
+                },
+                action: (progress) => {
+                    // Grow the daughter stars and move them out
+                    daughterStars.children.forEach((pivot, i) => {
+                        const sprite = pivot.children[0];
+                        // Grow from 0.01 to 1.0
+                        const scale = 0.01 + progress * 0.99;
+                        sprite.scale.set(scale, scale, scale);
+                        
+                        // Move into orbit
+                        sprite.position.x = pivot.userData.distance * progress;
+                        pivot.rotation.y += pivot.userData.orbitSpeed * 0.01;
+                    });
+                    
+                    // Camera zooms to show the family
+                    camera.position.z = 15 - star.position.z;
+                }
+            },
+            {
+                // Scene 6: The New Constellation (Legacy)
+                duration: 8,
+                title: "Scene 6: The New Constellation",
+                text: "He returns to build a legacy, a new constellation for all to see.",
+                setup: () => {
+                    // Star returns to origin
+                    star.position.z = 0;
+                    
+                    // Create the constellation
+                    const constellationShape = [
+                        new THREE.Vector3(0, 0, 0), // The main star
+                        new THREE.Vector3(-5, 3, 0),
+                        new THREE.Vector3(-8, -2, 0),
+                        new THREE.Vector3(0, -7, 0),
+                        new THREE.Vector3(8, -2, 0),
+                        new THREE.Vector3(5, 3, 0),
+                        new THREE.Vector3(-5, 3, 0) // Close loop
+                    ];
+                    
+                    const points = [];
+                    // Add 500 particles, clustering around the constellation points
+                    for(let i=0; i < 500; i++) {
+                        const baseVec = constellationShape[i % (constellationShape.length-1)];
+                        points.push(
+                            baseVec.x + (Math.random() - 0.5) * 2,
+                            baseVec.y + (Math.random() - 0.5) * 2,
+                            baseVec.z + (Math.random() - 0.5) * 2
+                        );
+                    }
+                    
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                    
+                    const material = new THREE.PointsMaterial({
+                        color: 0x9ECFFF, // Light blue
+                        size: 0.1,
+                        blending: THREE.AdditiveBlending,
+                        transparent: true,
+                        sizeAttenuation: true
+                    });
+                    
+                    constellation = new THREE.Points(geometry, material);
+                    constellation.scale.set(0.01, 0.01, 0.01); // Start small
+                    scene.add(constellation);
+                },
+                action: (progress) => {
+                    // Star grows to its largest
+                    const scale = 3.0 + progress * 2.0; // Grow from 3.0 to 5.0
+                    star.scale.set(scale, scale, scale);
+                    starLight.intensity = 5 + progress * 5; // Get very bright
+                    
+                    // Constellation expands
+                    const conScale = 0.01 + progress * 1.99; // Grow from 0.01 to 2.0
+                    constellation.scale.set(conScale, conScale, conScale);
+                    constellation.rotation.z += 0.001;
+                    
+                    // Camera pulls back to reveal the whole constellation
+                    camera.position.z = 15 + progress * 25; // Pull back to z=40
+                }
+            },
+            {
+                // Scene 7: The Guiding Star (Finale)
+                duration: 7,
+                title: "Scene 7: The Guiding Star",
+                text: "Happy Birthday to our guiding star.",
+                setup: () => {
+                    // Final shot, hold position
+                },
+                action: (progress) => {
+                    // Gently pulse the main star's light
+                    const pulse = 1.0 + Math.sin(clock.getElapsedTime() * 3) * 0.1;
+                    star.scale.set(5 * pulse, 5 * pulse, 5 * pulse);
+                    starLight.intensity = 10 * pulse;
+                    
+                    // Slowly fade to black at the end
+                    if (progress > 0.7) {
+                        const fade = 1.0 - (progress - 0.7) / 0.3;
+                        renderer.domElement.style.opacity = fade;
+                        // Also fade text
+                        textOverlay.style.opacity = fade;
+                        sceneTitle.style.opacity = fade;
+                    } else {
+                        renderer.domElement.style.opacity = 1;
+                    }
+                }
+            }
+        ];
+
+        // --- CORE FUNCTIONS ---
+
+        /**
+         * Initialize the 3D scene, audio, and event listeners
+         */
+        function init() {
+            // 1. Scene
+            scene = new THREE.Scene();
+            
+            // 2. Clock
+            clock = new THREE.Clock();
+            
+            // 3. Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 15;
+            
+            // 4. Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x000000, 1);
+            document.body.appendChild(renderer.domElement);
+            
+            // 5. Background Nebula
+            nebulaParticles = createParticleSystem(20000, [new THREE.Color(0x1e0033), new THREE.Color(0x4a004a), new THREE.Color(0x003355)], 100);
+            scene.add(nebulaParticles);
+            
+            // 6. Ambient Light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+            scene.add(ambientLight);
+            
+            // 7. Audio
+            initAudio();
+            
+            // 8. Event Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            restartBtn.addEventListener('click', restartAnimation);
+            
+            // 9. Start first scene (paused)
+            startScene(0);
+            
+            // 10. Start render loop
+            animate();
+        }
+
+        /**
+         * The main animation loop, called every frame
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Animate background nebula
+            nebulaParticles.rotation.y = elapsedTime * 0.01;
+            
+            if (animationState === 'playing') {
+                const currentScene = scenes[currentSceneIndex];
+                const sceneTime = elapsedTime - sceneStartTime;
+                let progress = Math.min(sceneTime / currentScene.duration, 1.0);
+                
+                // Run the scene's action function
+                if (currentScene.action) {
+                    currentScene.action(progress);
+                }
+                
+                // Check for scene transition
+                if (progress === 1.0) {
+                    currentSceneIndex++;
+                    if (currentSceneIndex < scenes.length) {
+                        startScene(currentSceneIndex);
+                    } else {
+                        // End of animation
+                        animationState = 'paused';
+                        playPauseText.textContent = 'Play';
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                    }
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        /**
+         * Start a new scene by index
+         */
+        function startScene(index) {
+            currentSceneIndex = index;
+            sceneStartTime = clock.getElapsedTime();
+            
+            const sceneData = scenes[index];
+            
+            // Fade out text, update, fade in
+            textOverlay.classList.remove('fade-in');
+            sceneTitle.classList.remove('fade-in');
+            
+            setTimeout(() => {
+                textOverlay.textContent = sceneData.text;
+                sceneTitle.textContent = sceneData.title;
+                textOverlay.classList.add('fade-in');
+                sceneTitle.classList.add('fade-in');
+            }, 1000); // Wait for fade-out
+            
+            // Run the scene's one-time setup
+            if (sceneData.setup) {
+                sceneData.setup();
+            }
+            
+            // Trigger music
+            if(musicPlaying && synth) {
+                // Play a chord based on the scene
+                const chords = [
+                    ['C4', 'E4', 'G4'], // C Major (Spark)
+                    ['F4', 'A4', 'C5'], // F Major (Gathering)
+                    ['G4', 'B4', 'D5'], // G Major (First System)
+                    ['A4', 'C5', 'E5'], // A Minor (Journey)
+                    ['D4', 'F#4', 'A4'], // D Major (Family)
+                    ['C4', 'E4', 'G4', 'B4'], // Cmaj7 (Legacy)
+                    ['C5', 'E5', 'G5']  // C Major High (Finale)
+                ];
+                synth.triggerAttackRelease(chords[index % chords.length], sceneData.duration * 0.8);
+            }
+        }
+
+        /**
+         * Toggle Play/Pause state
+         */
+        function togglePlayPause() {
+            if (animationState === 'paused') {
+                animationState = 'playing';
+                sceneStartTime = clock.getElapsedTime() - (sceneStartTime || 0); // Resume
+                playPauseText.textContent = 'Pause';
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                
+                // Start audio context
+                if (!musicPlaying) {
+                    Tone.start();
+                    musicLoop.start(0);
+                    Tone.Transport.start();
+                    musicPlaying = true;
+                    // Trigger first chord
+                    startScene(currentSceneIndex); 
+                }
+            } else {
+                animationState = 'paused';
+                // Store elapsed time in scene
+                sceneStartTime = clock.getElapsedTime() - sceneStartTime;
+                playPauseText.textContent = 'Play';
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Restart the entire animation
+         */
+        function restartAnimation() {
+            // A full reload is the cleanest way to reset all three.js state
+            window.location.reload();
+        }
+
+        /**
+         * Handle window resize
+         */
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /**
+         * Initialize Tone.js audio
+         */
+        function initAudio() {
+            // Create a synth with a nice, spacey preset
+            synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "fatsawtooth" },
+                envelope: {
+                    attack: 0.5,
+                    decay: 0.1,
+                    sustain: 0.8,
+                    release: 2
+                },
+                volume: -12 // Quieter
+            }).toDestination();
+            
+            const reverb = new Tone.Reverb(4).toDestination();
+            synth.connect(reverb);
+            
+            // Background atmospheric pad
+            const pad = new Tone.Synth({
+                oscillator: { type: "pulse", width: 0.8 },
+                envelope: { attack: 4, decay: 0.1, sustain: 1, release: 4 },
+                volume: -20
+            }).connect(reverb);
+
+            musicLoop = new Tone.Loop(time => {
+                pad.triggerAttackRelease("C2", "8m", time);
+                pad.triggerAttackRelease("G2", "8m", time + "2m");
+                pad.triggerAttackRelease("F2", "8m", time + "4m");
+            }, "8m").start(0); // 8-measure loop
+            
+            Tone.Transport.bpm.value = 60; // Slow, majestic tempo
+        }
+
+        /**
+         * Create a particle system for stardust/nebula
+         */
+        function createParticleSystem(count, colors, range, size = 0.05) {
+            const particlesGeo = new THREE.BufferGeometry();
+            const particlesCnt = count;
+            
+            const posArray = new Float32Array(particlesCnt * 3);
+            const colorArray = new Float32Array(particlesCnt * 3);
+            
+            for(let i = 0; i < particlesCnt * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * range;
+                
+                let color;
+                if(Array.isArray(colors)) {
+                    color = colors[Math.floor(Math.random() * colors.length)];
+                } else {
+                    color = colors;
+                }
+                colorArray[i*3 + 0] = color.r;
+                colorArray[i*3 + 1] = color.g;
+                colorArray[i*3 + 2] = color.b;
+            }
+            
+            particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeo.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMat = new THREE.PointsMaterial({
+                size: size,
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                vertexColors: true
+            });
+            
+            return new THREE.Points(particlesGeo, particlesMat);
+        }
+        
+        /**
+         * Create a procedural texture for the glowing star
+         */
+        function createGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            
+            const gradient = context.createRadialGradient(
+                canvas.width / 2, 
+                canvas.height / 2, 
+                0, 
+                canvas.width / 2, 
+                canvas.height / 2, 
+                canvas.width / 2
+            );
+            
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.2, 'rgba(255, 255, 200, 1)');
+            gradient.addColorStop(0.4, 'rgba(255, 220, 150, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 200, 100, 0)');
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        // --- START THE APPLICATION ---
+        init();
+        
+    </script>
+</body>
+</html>

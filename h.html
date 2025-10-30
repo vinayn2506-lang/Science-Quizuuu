@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chosen Palette: Warm Neutrals (Beige/Orange, Brown/Yellow, with White accents) -->
+    <!-- Application Structure Plan: A single-page application with a persistent top navigation bar. This bar features 6 thematic, clickable sections: Welcome, Early Life, Career Foundations, Family, The Legacy (SIS), and Personal Tributes. This is a non-linear, thematic structure chosen over the report's linear slide-by-slide format. It allows users to immediately explore the aspect of Mr. Kumar's life they are most interested in, which is more user-friendly for an "exploration" app. The 'Welcome' page serves as a dashboard, featuring a 'Journey at a Glance' bubble chart to visualize key milestones. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Key life milestones (Birth, MBA, Inuom, Marriage, GE, Daughters, SIS).
+        - Goal: Provide a "dashboard" overview of his life, showing time, category (personal/professional), and relative impact.
+        - Viz/Presentation: Bubble Chart (via Chart.js on Canvas).
+        - Interaction: Tooltips on hover to identify each milestone.
+        - Justification: Fulfills the mandatory chart requirement by creatively translating chronological and qualitative data into a quantitative-style visual. Data points are `{x: Year, y: Category (1=Personal, 2=Professional), r: Estimated Impact}`.
+        - Report Info: All biographical text and qualitative descriptions from the PPT.
+        - Goal: Present detailed information for each distinct life stage.
+        - Viz/Presentation: Dynamic HTML content blocks (Tailwind-styled cards).
+        - Interaction: Clicking a button in the top navigation bar instantly updates the main content area with the relevant HTML.
+        - Justification: This is a standard and highly effective SPA pattern for presenting segmented content without page reloads, fitting the "interactive report" goal perfectly.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <title>The Remarkable Journey of Mr. Jagdeesh Kumar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 50vh;
+            }
+        }
+        .nav-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-btn.active {
+            background-color: #fefce8; /* yellow-50 */
+            color: #713f12; /* yellow-900 */
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .nav-btn:hover:not(.active) {
+            background-color: #fde68a; /* yellow-200 */
+        }
+    </style>
+</head>
+<body class="bg-orange-50 text-yellow-900 min-h-screen">
+
+    <header class="bg-yellow-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-center">The Remarkable Journey of Mr. Jagdeesh Kumar</h1>
+            <p class="text-center text-yellow-200 mt-1">An Interactive Birthday Tribute</p>
+        </div>
+    </header>
+
+    <nav class="bg-yellow-100 shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap justify-center gap-2 py-3">
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="welcome">Welcome</button>
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="early">Early Life (1974)</button>
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="career">Career Foundations</button>
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="family">Family (1997-2003)</button>
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="legacy">The Legacy (2010)</button>
+                <button class="nav-btn text-sm md:text-base font-medium text-yellow-800 px-3 py-2 md:px-4 rounded-lg" data-page="tributes">Personal Tributes</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="content-area" class="container mx-auto p-4 sm:p-6 lg:p-8">
+    </main>
+
+    <footer class="text-center py-4 mt-8">
+        <p class="text-sm text-yellow-700">A special tribute for a remarkable boss. Happy Birthday!</p>
+    </footer>
+
+    <script>
+        const contentPages = {
+            welcome: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4 text-center">HAPPY BIRTHDAY, SIR!</h2>
+                    <p class="text-lg text-gray-700 mb-6 text-center max-w-3xl mx-auto">
+                        This is an interactive celebration of your journey. As Secretary & Correspondent of Satyam Group of Institution, you have guided so many. We wish you a very happy birthday, a long life, success, good health, and happiness.
+                    </p>
+                    <p class="text-base text-gray-600 mb-8 text-center">
+                        Click the tabs above to explore your life's key chapters, or see the "Journey at a Glance" chart below. This chart visualizes your personal and professional milestones over time.
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="milestoneChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-500 text-center mt-2">
+                        Chart shows milestones by year. Vertical position separates Personal (bottom) from Professional (top). Bubble size represents estimated impact.
+                    </p>
+                </div>
+            `,
+            early: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4">Early Life (1974)</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        This section covers the beginning of the journey. The foundation for the person you would become was laid in your hometown, surrounded by family.
+                    </p>
+                    <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                        <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Born in Nandyal</h3>
+                        <p class="text-gray-700 text-base">
+                            Mr. Jagdeesh Kumar sir was born on <strong>November 1st, 1974</strong>, in Nandyal, a city in Andhra Pradesh.
+                        </p>
+                        <p class="text-gray-700 text-base mt-2">
+                            He is the youngest among the four children of Gurunatham and Parvathama.
+                        </p>
+                    </div>
+                </div>
+            `,
+            career: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4">Career Foundations</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        Your professional journey shows a path of ambition, learning, and international experience, starting with a strong educational foundation and entrepreneurial spirit.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                            <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Education</h3>
+                            <p class="text-gray-700 text-base">
+                                Completed his <strong>MBA</strong> in Dhruva College of Management, in Hyderabad.
+                            </p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                            <h3 class="text-2xl font-semibold text-yellow-900 mb-2">First Venture</h3>
+                            <p class="text-gray-700 text-base">
+                                Sir's first entrepreneurial venture was <strong>Inuom Soft Pvt. Ltd.</strong>
+                            </p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                            <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Global Experience</h3>
+                            <p class="text-gray-700 text-base">
+                                Sir headed to the USA and worked for the <strong>GE Company</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            family: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4">Family (1997 - 2003)</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        Alongside a growing career, you built a beautiful family. This section celebrates the personal milestones that define your life.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                            <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Marriage</h3>
+                            <p class="text-gray-700 text-base">
+                                Sir got married to the love of his life in the year <strong>1997 on March 1st</strong>.
+                            </p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                            <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Two Daughters</h3>
+                            <p class="text-gray-700 text-base">
+                                Sir has two daughters, "beauty with brains":<br>
+                                1st daughter, <strong>Mounisha</strong>, was born on <strong>1st Feb 1999</strong>.<br>
+                                2nd daughter, <strong>Shreeya</strong>, was born on <strong>9th Feb 2003</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            legacy: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4">The Legacy (2010)</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        This chapter is about returning to your roots and building something of lasting value for the community. The founding of Satyam Group of Institution is a testament to your vision.
+                    </p>
+                    <div class="bg-orange-50 rounded-lg p-6 border border-yellow-200">
+                        <h3 class="text-2xl font-semibold text-yellow-900 mb-2">Satyam Group of Institution (SIS)</h3>
+                        <p class="text-gray-700 text-base">
+                            Sir came back to Ballari and started his project <strong>'SIS'</strong> along with Sir Satyanarayana in the year <strong>2010</strong>.
+                        </p>
+                        <p class="text-gray-700 text-base mt-4">
+                            This project has become your legacy, impacting generations of students and providing a foundation for the future of the community.
+                        </p>
+                    </div>
+                </div>
+            `,
+            tributes: `
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-yellow-800 mb-4">Personal Tributes</h2>
+                    <p class="text-lg text-gray-700 mb-6">
+                        More than just milestones, your journey is defined by your character. Here are some of the qualities we see in you every day.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">🌟</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Role Model</h3>
+                            <p class="text-gray-700 text-sm">"He is the role model to all those who don't give up easily."</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">💡</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Good Motivator</h3>
+                            <p class="text-gray-700 text-sm">A leader who inspires and motivates others to achieve their best.</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">🧭</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Explorer</h3>
+                            <p class="text-gray-700 text-sm">"Sir loves to explore new things and learn."</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">⚙️</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Efficient Hard Worker</h3>
+                            <p class="text-gray-700 text-sm">A testament to your dedication and efficiency.</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">🎯</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Goal-Oriented</h3>
+                            <p class="text-gray-700 text-sm">"Sir has his goals, aim and dreams set... and tries hard and reaches it."</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-yellow-200 text-center">
+                            <span class="text-3xl">👤</span>
+                            <h3 class="text-xl font-semibold text-yellow-900 mt-2">Self-Esteem Person</h3>
+                            <p class="text-gray-700 text-sm">A person of high self-esteem and confidence.</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const contentArea = document.getElementById('content-area');
+        let currentChart = null;
+
+        function showPage(pageName) {
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+
+            contentArea.innerHTML = contentPages[pageName];
+
+            navButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.page === pageName);
+            });
+
+            if (pageName === 'welcome') {
+                createMilestoneChart();
+            }
+        }
+
+        function createMilestoneChart() {
+            const ctx = document.getElementById('milestoneChart');
+            if (!ctx) return;
+
+            const data = {
+                datasets: [
+                    {
+                        label: 'Personal Milestones',
+                        data: [
+                            { x: 1974, y: 1, r: 10, label: 'Born in Nandyal (1974)' },
+                            { x: 1997, y: 1, r: 20, label: 'Married (1997)' },
+                            { x: 1999, y: 1, r: 15, label: 'Daughter Mounisha (1999)' },
+                            { x: 2003, y: 1, r: 15, label: 'Daughter Shreeya (2003)' }
+                        ],
+                        backgroundColor: 'rgba(192, 77, 6, 0.7)'
+                    },
+                    {
+                        label: 'Professional Milestones',
+                        data: [
+                            { x: 1996, y: 2, r: 15, label: 'MBA from Dhruva (Approx. 1996)' },
+                            { x: 1998, y: 2, r: 20, label: 'Founded Inuom Soft (Approx. 1998)' },
+                            { x: 2000, y: 2, r: 25, label: 'Worked at GE, USA (Approx. 2000)' },
+                            { x: 2010, y: 2, r: 35, label: 'Founded SIS, Ballari (2010)' }
+                        ],
+                        backgroundColor: 'rgba(146, 64, 14, 0.7)'
+                    }
+                ]
+            };
+
+            currentChart = new Chart(ctx, {
+                type: 'bubble',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw.label || 'Milestone';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            },
+                            min: 1970,
+                            max: 2015
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Category'
+                            },
+                            ticks: {
+                                callback: function(value, index, ticks) {
+                                    return value === 1 ? 'Personal' : (value === 2 ? 'Professional' : '');
+                                }
+                            },
+                            min: 0,
+                            max: 3
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showPage(btn.dataset.page);
+                });
+            });
+
+            showPage('welcome');
+        });
+
+    </script>
+</body>
+</html>

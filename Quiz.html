@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Wright Brothers: Flight Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Basic Setup --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            overflow: hidden; /* Prevents scrollbars from the animations */
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* The Night Sky Background */
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+        }
+
+        /* --- Premium Night Sky Animation --- */
+        
+        /* Airplane Silhouette */
+        .airplane {
+            position: absolute;
+            top: 10%;
+            left: -200px; /* Start off-screen */
+            width: 150px;
+            height: auto;
+            opacity: 0.6;
+            animation: flyAcross 25s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+        }
+
+        @keyframes flyAcross {
+            0% {
+                transform: translate(0, 0);
+                left: -200px;
+            }
+            100% {
+                transform: translate(calc(100vw + 200px), 50px);
+                left: 100vw;
+            }
+        }
+
+        /* Animated Stars */
+        @keyframes move-stars {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-2000px); }
+        }
+
+        .stars, .stars-2, .stars-3 {
+            width: 100%;
+            height: 2000px; /* Large height to allow for scrolling */
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-repeat: repeat;
+            background-position: center;
+            animation: move-stars 120s linear infinite;
+        }
+
+        .stars {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="1" cy="1" r="1" fill="white"/></svg>');
+            background-size: 500px 500px;
+            opacity: 0.4;
+            animation-duration: 80s;
+        }
+        .stars-2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="2" cy="2" r="0.8" fill="white"/></svg>');
+            background-size: 400px 400px;
+            opacity: 0.6;
+            animation-duration: 60s;
+        }
+        .stars-3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="3" cy="3" r="0.5" fill="white"/></svg>');
+            background-size: 300px 300px;
+            opacity: 0.8;
+            animation-duration: 40s;
+        }
+
+        /* --- Quiz Interface --- */
+        .quiz-container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(18, 26, 36, 0.85); /* Semi-transparent */
+            border: 1px solid rgba(110, 231, 183, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            z-index: 10;
+            position: relative;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(110, 231, 183, 0.5);
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #6EE7B7; /* Light green */
+        }
+
+        #progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #34D399; /* Green */
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body {
+            flex-grow: 1;
+            overflow-y: auto; /* Adds scroll if content is too tall */
+        }
+
+        #question-container {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        /* --- New style for question number --- */
+        #question-number-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6EE7B7; /* Light green */
+            margin-bottom: 10px;
+        }
+
+        #question-text {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.5;
+            min-height: 60px; /* Prevents layout shift */
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:not(:disabled):hover {
+            background: rgba(110, 231, 183, 0.2);
+            border-color: #6EE7B7;
+        }
+
+        .option-btn.correct {
+            background: #10B981; /* Darker green */
+            border-color: #059669;
+            color: #ffffff;
+        }
+
+        .option-btn.incorrect {
+            background: #EF4444; /* Red */
+            border-color: #DC2626;
+            color: #ffffff;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback-container {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            min-height: 27px; /* Prevents layout shift */
+        }
+
+        .feedback-correct {
+            color: #34D399;
+        }
+
+        .feedback-incorrect {
+            color: #F87171;
+        }
+
+        #results-container {
+            display: none; /* Hidden by default */
+            text-align: center;
+        }
+
+        #results-container h2 {
+            font-size: 24px;
+            color: #6EE7B7;
+            margin-bottom: 15px;
+        }
+
+        #results-container p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #064E3B;
+            background: #6EE7B7;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #restart-btn:hover {
+            background: #ffffff;
+            box-shadow: 0 0 15px rgba(110, 231, 183, 0.5);
+        }
+
+        /* Responsive for smaller screens */
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 20px;
+                width: 95%;
+                max-height: 95vh;
+            }
+
+            header h1 {
+                font-size: 24px;
+            }
+
+            #question-text {
+                font-size: 18px;
+                min-height: 50px;
+            }
+
+            .option-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Premium Night Sky Background -->
+    <div class="stars"></div>
+    <div class="stars-2"></div>
+    <div class="stars-3"></div>
+    
+    <!-- Airplane Silhouette SVG (so no external images are needed) -->
+    <svg class="airplane" viewBox="0 0 200 83" fill="#333" xmlns="http://www.w3.org/2000/svg">
+        <path d="M200 45.4124L188.706 43.1636L137.931 38.3845L138.25 31.6091L149.37 28.8105L149.317 25.811L138.197 28.6096L137.878 21.8341L148.742 19.1413L148.689 16.1417L137.825 18.8345L137.562 13.528L112.553 20.3174L112.447 16.818L106.012 18.5173L101.325 19.8665L101.272 16.867L94.8369 18.5663L89.8318 20.0212L89.7788 17.0217L83.3438 18.721L79.123 19.9723L79.07 16.9727L72.635 18.672L68.7328 19.8142L68.6798 16.8146L62.2448 18.5139L58.603 19.5505L58.55 16.5509L52.115 18.2502L48.6848 19.2311L48.6318 16.2315L42.1968 17.9308L39.027 18.8059L38.974 15.8064L32.539 17.5057L29.6302 18.275L29.5772 15.2754L23.1422 16.9747L20.5518 17.6382L20.4988 14.6386L14.0638 16.3379L11.8318 16.8955L11.7788 13.896L5.34375 15.5953L3.53482 16.0382L3.48182 13.0386L0 14.0084L0.0530014 51.5034L3.48182 52.4731L3.53482 50.0838L5.34375 50.5267L11.7788 52.226L11.8318 49.8367L14.0638 50.3943L20.4988 52.0936L20.5518 49.7043L23.1422 50.3678L29.5772 52.0671L29.6302 49.6778L32.539 50.4471L38.974 52.1464L39.027 49.7571L42.1968 50.6322L48.6318 52.3315L48.6848 49.9422L52.115 50.9231L58.55 52.6224L58.603 50.2331L62.2448 51.2697L68.6798 52.969L68.7328 50.5797L72.635 51.7219L79.07 53.4212L79.123 51.0319L83.3438 52.2832L89.7788 54.013L89.8318 51.5932L94.8369 53.048L101.272 54.7473L101.325 52.358L106.012 53.7072L112.447 55.4065L112.553 52.5186L137.562 59.308L137.825 53.9485L148.689 56.6413L148.742 53.6417L137.878 50.949L138.197 44.1734L149.317 46.972L149.37 43.9725L138.25 41.1739L137.931 38.3845L188.706 43.1636L200 45.4124Z"/>
+    </svg>
+
+    <!-- Main Quiz Interface -->
+    <div class="quiz-container">
+        <header>
+            <h1>The Wright Brothers: Flight Quiz</h1>
+        </header>
+
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div class="quiz-body">
+            <div id="question-container">
+                <!-- Added element for the question number -->
+                <p id="question-number-text"></p> 
+                <p id="question-text">Loading your first question...</p>
+            </div>
+
+            <div id="options-container">
+                <button class="option-btn" id="option0"></button>
+                <button class="option-btn" id="option1"></button>
+                <button class="option-btn" id="option2"></button>
+                <button class="option-btn" id="option3"></button>
+            </div>
+
+            <div id="feedback-container">
+                <p id="feedback-text"></p>
+            </div>
+        </div>
+
+        <div id="results-container">
+            <h2>Quiz Complete.</h2>
+            <p id="results-text">Your score is...</p>
+            <button id="restart-btn">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Questions Data ---
+        const questions = [
+            {
+                question: "What city did the Wright family live in?",
+                options: ["New York, New York", "Dayton, Ohio", "Paris, France", "Kitty Hawk, North Carolina"],
+                answer: 1
+            },
+            {
+                question: "What was Wilbur and Orville's father's name?",
+                options: ["Milton", "Samuel", "John", "Otto"],
+                answer: 0
+            },
+            {
+                question: "What toy did their father give them that sparked their interest in flying?",
+                options: ["A kite", "A model airplane", "A toy helicopter", "A bicycle"],
+                answer: 2
+            },
+            {
+                question: "What sport was Wilbur playing when he was badly injured?",
+                options: ["Baseball", "Football", "Hockey", "Biking"],
+                answer: 2
+            },
+            {
+                question: "What sickness did Wilbur's mother, Susan, have?",
+                options: ["Tuberculosis", "Typhoid", "The flu", "A broken leg"],
+                answer: 0
+            },
+            {
+                question: "What was Orville's first business, which Wilbur later joined?",
+                options: ["Bicycle repair", "A printing shop", "A toy store", "A newspaper"],
+                answer: 1
+            },
+            {
+                question: "In 1892, what kind of shop did the brothers open?",
+                options: ["A print shop", "A hardware store", "A bicycle shop", "A motor shop"],
+                answer: 2
+            },
+            {
+                question: "What sickness did Orville get in 1896?",
+                options: ["Tuberculosis", "A high fever", "A broken arm", "Typhoid fever"],
+                answer: 3
+            },
+            {
+                question: "Who was the famous German glider pilot that Wilbur read about?",
+                options: ["Otto Lilienthal", "Samuel Langley", "John Daniels", "Calbraith Rodgers"],
+                answer: 0
+            },
+            {
+                question: "Who built the machine called the 'Aerodrome'?",
+                options: ["The Wright Brothers", "Samuel Langley", "Otto Lilienthal", "The U.S. Army"],
+                answer: 1
+            },
+            {
+                question: "What famous organization did Wilbur write to for information?",
+                options: ["The U.S. Army", "The Smithsonian Institution", "Harvard University", "The New York Times"],
+                answer: 1
+            },
+            {
+                question: "What everyday item gave Wilbur the idea for 'wing-warping'?",
+                options: ["A bicycle chain", "A rubber band", "A cardboard box", "A bird's wing"],
+                answer: 2
+            },
+            {
+                question: "What is a 'glider'?",
+                options: ["A plane with a jet engine", "A plane with no engine", "A toy helicopter", "A type of bicycle"],
+                answer: 1
+            },
+            {
+                question: "Where did the brothers go to test their gliders?",
+                options: ["Dayton, Ohio", "Washington, D.C.", "Kitty Hawk, North Carolina", "Paris, France"],
+                answer: 2
+            },
+            {
+                question: "Why did they choose Kitty Hawk for their tests?",
+                options: ["It was close to home", "It had a big city", "It had strong wind and soft sand", "It had an Army base"],
+                answer: 2
+            },
+            {
+                question: "What tiny insects bothered the brothers at Kitty Hawk?",
+                options: ["Spiders", "Ants", "Flies", "Mosquitoes"],
+                answer: 3
+            },
+            {
+                question: "In what year did the brothers build their best glider, before adding a motor?",
+                options: ["1899", "1900", "1902", "1903"],
+                answer: 2
+            },
+            {
+                question: "What did the brothers add to their 1903 machine?",
+                options: ["A motor and propellers", "Wheels", "A better steering wheel", "Seats for passengers"],
+                answer: 0
+            },
+            {
+                question: "What did they call their first powered airplane?",
+                options: ["The Kitty Hawk", "The Flyer", "The Aerodrome", "The 1903"],
+                answer: 1
+            },
+            {
+                question: "How did the brothers decide who would fly first on December 14?",
+                options: ["They argued", "They flipped a coin", "Wilbur volunteered", "Orville volunteered"],
+                answer: 1
+            },
+            {
+                question: "Who won the coin flip to fly first?",
+                options: ["Orville", "Their father, Milton", "Wilbur", "John T. Daniels"],
+                answer: 2
+            },
+            {
+                question: "What was the date of the first successful powered flight?",
+                options: ["December 14, 1903", "December 17, 1903", "January 1, 1904", "August 8, 1908"],
+                answer: 1
+            },
+            {
+                question: "Which brother flew first on that successful day?",
+                options: ["Wilbur", "Milton", "Orville", "John T. Daniels"],
+                answer: 2
+            },
+            {
+                question: "How long did the very first flight last?",
+                options: ["59 seconds", "120 feet", "12 seconds", "3 miles"],
+                answer: 2
+            },
+            {
+                question: "Who took the famous photograph of the first flight?",
+                options: ["Wilbur Wright", "A reporter", "Samuel Langley", "John T. Daniels"],
+                answer: 3
+            },
+            {
+                question: "What was the longest flight of that day?",
+                options: ["12 seconds", "59 seconds", "3 minutes", "3 miles"],
+                answer: 1
+            },
+            {
+                question: "Who made the longest flight (59 seconds) on the first day?",
+                options: ["Orville", "Wilbur", "John T. Daniels", "Samuel Langley"],
+                answer: 1
+            },
+            {
+                question: "What happened to the Wright Flyer after the last flight?",
+                options: ["They put it in a shed", "It flew back to Ohio", "A gust of wind broke it", "They sold it"],
+                answer: 2
+            },
+            {
+                question: "How did the brothers tell their father the good news?",
+                options: ["By telephone", "They wrote a letter", "They sent a telegram", "They flew home"],
+                answer: 2
+            },
+            {
+                question: "What was the name of their new test field near Dayton?",
+                options: ["Kitty Hawk II", "Wright Field", "Huffman Prairie", "Ohio Field"],
+                answer: 2
+            },
+            {
+                question: "What did a French newspaper call the brothers?",
+                options: ["\"Brave Heroes\"", "\"Smart Inventors\"", "\"Flyers or liars?\"", "\"The Bicycle Men\""],
+                answer: 2
+            },
+            {
+                question: "In 1908, where did Wilbur go to show the world their plane?",
+                options: ["France", "England", "Germany", "California"],
+                answer: 0
+            },
+            {
+                question: "What was the popular hat in Paris that was named after Wilbur?",
+                options: ["The Wilbur Hat", "The Ohio Cap", "The Veelbur Reet", "The Flyer"],
+                answer: 2
+            },
+            {
+                question: "Where did Orville perform tests for the U.S. Army?",
+                options: ["Kitty Hawk, North Carolina", "Fort Myer, Virginia", "Dayton, Ohio", "New York City"],
+                answer: 1
+            },
+            {
+                question: "What famous statue did Wilbur fly around in New York?",
+                options: ["The Statue of Liberty", "The Lincoln Memorial", "The Eiffel Tower", "A statue of his father"],
+                answer: 0
+            },
+            {
+                question: "After becoming famous, what did the brothers open in Dayton?",
+                options: ["A new bicycle shop", "A museum", "An airplane company", "A school for pilots"],
+                answer: 2
+            },
+            {
+                question: "Who was Calbraith Rodgers?",
+                options: ["The brothers' helper", "The first man to fly across America", "The King of France", "A reporter"],
+                answer: 1
+            },
+            {
+                question: "What sickness did Wilbur die from in 1912?",
+                options: ["A heart attack", "Tuberculosis", "Typhoid fever", "An airplane crash"],
+                answer: 2
+            },
+            {
+                question: "What year did Wilbur die?",
+                options: ["1903", "1908", "1912", "1948"],
+                answer: 2
+            },
+            {
+                question: "Which brother took their 81-year-old father on his first flight?",
+                options: ["Wilbur", "Orville", "Lorin", "Reuchlin"],
+                answer: 1
+            },
+            {
+                question: "What did Milton Wright shout during his flight?",
+                options: ["\"Stop, let me down!\"", "\"I am scared!\"", "\"Higher, Orville... higher!\"", "\"Wonderful!\""],
+                answer: 2
+            },
+            {
+                question: "What year did Orville Wright die?",
+                options: ["1912", "1920", "1948", "1969"],
+                answer: 2
+            },
+            {
+                question: "What did U.S. astronauts take to the moon in 1969?",
+                options: ["A photo of the brothers", "A bicycle", "Pieces of the first airplane", "A letter from Orville"],
+                answer: 2
+            },
+            {
+                question: "What did the 1903 Wright Flyer NOT have?",
+                options: ["A motor", "Propellers", "Wings", "Wheels"],
+                answer: 3
+            },
+            {
+                question: "Which brother was shy and afraid of public speaking?",
+                options: ["Wilbur", "Orville", "Both", "Neither"],
+                answer: 1
+            },
+            {
+                question: "What was their sister's name?",
+                options: ["Susan", "Katharine", "Mary", "Jane"],
+                answer: 1
+            },
+            {
+                question: "What instrument did Orville play?",
+                options: ["Piano", "Guitar", "Harmonica", "Mandolin"],
+                answer: 3
+            },
+            {
+                question: "What instrument did Wilbur play?",
+                options: ["Piano", "Guitar", "Harmonica", "Mandolin"],
+                answer: 2
+            },
+            {
+                question: "What job did the brothers' father have?",
+                options: ["A pilot", "A bishop", "A teacher", "A bicycle maker"],
+                answer: 1
+            },
+            {
+                question: "What did the brothers always do together?",
+                options: ["Go to school", "Work and talk over ideas", "Fly kites", "Race bicycles"],
+                answer: 1
+            }
+        ];
+
+        // --- DOM Elements ---
+        const progressBar = document.getElementById('progress-bar');
+        const questionNumberText = document.getElementById('question-number-text'); // Added
+        const questionText = document.getElementById('question-text');
+        const optionButtons = [
+            document.getElementById('option0'),
+            document.getElementById('option1'),
+            document.getElementById('option2'),
+            document.getElementById('option3')
+        ];
+        const feedbackText = document.getElementById('feedback-text');
+        const quizBody = document.querySelector('.quiz-body');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsText = document.getElementById('results-text');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // --- State Variables ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let encouragement = [
+            "You can do this.",
+            "Great job, keep going.",
+            "You're learning a lot.",
+            "Thinking cap is on.",
+            "Nice one.",
+            "You know your history.",
+            "Keep it up.",
+            "On a roll.",
+            "Almost there.",
+            "You got this."
+        ];
+
+        // --- Functions ---
+        
+        /**
+         * Shuffles the questions array so the quiz is different each time.
+         */
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        /**
+         * Loads the current question into the UI.
+         */
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            // Reset UI
+            feedbackText.textContent = "";
+            feedbackText.className = "";
+            optionButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.className = "option-btn";
+            });
+
+            // Load new question data
+            let currentQuestion = questions[currentQuestionIndex];
+            
+            // --- Updated Section ---
+            // Display question number and text
+            questionNumberText.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            questionText.textContent = currentQuestion.question;
+            // --- End of Update ---
+            
+            // Set options
+            for (let i = 0; i < optionButtons.length; i++) {
+                optionButtons[i].textContent = currentQuestion.options[i];
+                optionButtons[i].onclick = () => selectOption(i);
+            }
+
+            // Update progress bar
+            let progress = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = progress + "%";
+            
+            // Show encouragement
+            let encouragementIndex = Math.floor(Math.random() * encouragement.length);
+            feedbackText.textContent = encouragement[encouragementIndex];
+        }
+
+        /**
+         * Handles the user's selection, provides feedback.
+         */
+        function selectOption(selectedIndex) {
+            // Disable buttons to prevent multiple answers
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            let currentQuestion = questions[currentQuestionIndex];
+            
+            if (selectedIndex === currentQuestion.answer) {
+                // Correct answer
+                score++;
+                optionButtons[selectedIndex].classList.add("correct");
+                feedbackText.textContent = "Correct.";
+                feedbackText.className = "feedback-correct";
+            } else {
+                // Incorrect answer
+                optionButtons[selectedIndex].classList.add("incorrect");
+                optionButtons[currentQuestion.answer].classList.add("correct");
+                feedbackText.textContent = "Not quite. The answer was: " + currentQuestion.options[currentQuestion.answer];
+                feedbackText.className = "feedback-incorrect";
+            }
+
+            // Wait a moment, then load the next question
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }, 1500); // 1.5 second delay
+        }
+
+        /**
+         * Displays the final score and hides the quiz.
+         */
+        function showResults() {
+            // Hide quiz, show results
+            quizBody.style.display = "none";
+            resultsContainer.style.display = "block";
+            progressBar.style.width = "100%";
+
+            // Display score
+            resultsText.textContent = `You got ${score} out of ${questions.length} correct.`;
+            
+            let message = "";
+            let percentage = (score / questions.length);
+            if(percentage === 1) {
+                message = "Perfect score. You're a flight expert.";
+            } else if (percentage >= 0.8) {
+                message = "Great job. You know the Wright brothers' story well.";
+            } else if (percentage >= 0.5) {
+                message = "Good effort. You learned a lot about history.";
+            } else {
+                message = "You learned something new today.";
+            }
+            resultsContainer.querySelector('h2').textContent = message;
+        }
+
+        /**
+         * Resets the quiz to its initial state.
+         */
+        function restartQuiz() {
+            // Reset state
+            score = 0;
+            currentQuestionIndex = 0;
+            shuffleQuestions(); // Re-shuffle for a new quiz
+            
+            // Show quiz, hide results
+            resultsContainer.style.display = "none";
+            quizBody.style.display = "flex";
+            
+            // Load the first question
+            loadQuestion();
+        }
+        
+        // --- Event Listeners ---
+        restartBtn.addEventListener('click', restartQuiz);
+
+        // --- Start Quiz ---
+        shuffleQuestions();
+        loadQuestion();
+
+    </script>
+</body>
+</html>
